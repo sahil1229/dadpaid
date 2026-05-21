@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#d6ad32" />
+<title>Dad Paid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Funnel+Display:wght@600;700;800;900&family=Funnel+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ─────────────────────────── BASE ─────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Funnel Sans', system-ui, -apple-system, sans-serif;
+    background: #0e0e0e;
+    color: #0e0e0e;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  input { font: inherit; color: inherit; }
+
+  /* ─────────────────────────── STAGE & PHONE ─────────────────────────── */
+  .stage {
+    width: 100vw; min-height: 100vh; min-height: 100dvh;
+    background: #0e0e0e;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+    overflow: hidden;
+  }
+  .phone {
+    width: 402px; height: 874px; flex-shrink: 0;
+    border-radius: 48px; overflow: hidden; position: relative;
+    background: #fffaf0;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35), 0 0 0 4px #1a1a1a, 0 0 0 5px #2a2a2a;
+  }
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 126px; height: 37px; border-radius: 24px; background: #000;
+    z-index: 50; pointer-events: none;
+  }
+  .home-bar {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 139px; height: 5px; border-radius: 100px;
+    background: rgba(14,14,14,0.3); z-index: 60; pointer-events: none;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    background: #fffaf0; color: #0e0e0e;
+    font-weight: 500;
+    overflow: hidden;
+  }
+  .screen *::-webkit-scrollbar { display: none; }
+  .screen * { scrollbar-width: none; }
+
+  /* Phone on mobile takes the entire viewport */
+  @media (max-width: 480px) {
+    .stage { padding: 0; min-height: 100dvh; }
+    .phone {
+      width: 100vw; height: 100vh; height: 100dvh;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .island { display: none; }
+    .home-bar { display: none; }
+    .header { padding-top: calc(env(safe-area-inset-top) + 8px); }
+    .nav { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  }
+
+  /* Shorter phones: tighten everything */
+  @media (max-height: 740px) {
+    .key { font-size: 22px; box-shadow: 2px 2px 0 #0e0e0e; }
+    .key:active { box-shadow: 1px 1px 0 #0e0e0e; }
+    .kp-amount { font-size: 36px; }
+    .kp-amount .sym { font-size: 24px; }
+    .ava-lg { width: 42px; height: 42px; font-size: 15px; }
+    .kp-pad { padding: 8px 10px 12px; gap: 5px; }
+    .cta { padding: 10px; font-size: 17px; box-shadow: 3px 3px 0 #0e0e0e; }
+  }
+
+  /* ─────────────────────────── HEADER ─────────────────────────── */
+  .header {
+    background: #0e0e0e; color: #fffaf0;
+    padding: 14px 22px 12px;
+    flex-shrink: 0;
+  }
+  .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .h-title {
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 24px;
+    letter-spacing: -0.01em; line-height: 1;
+    color: #e9c44b;
+  }
+  .h-sub {
+    margin-top: 5px; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(255,250,240,0.65);
+  }
+  .h-right {
+    font-family: 'Funnel Display'; font-weight: 700; font-size: 13px;
+    letter-spacing: 0.08em; text-align: right;
+    color: #e9c44b; line-height: 1.2;
+  }
+  .h-right-sub { color: rgba(255,250,240,0.55); font-weight: 500; font-size: 10px; margin-top: 4px; }
+  .h-offline {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #c0392b; color: #fffaf0;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .h-offline .pulse { width: 5px; height: 5px; border-radius: 50%; background: #fffaf0; }
+  .led-row-unsynced .led-row-amt::after {
+    content: '·'; display: inline-block; color: #c0392b; margin-left: 4px;
+    font-weight: 800;
+  }
+
+  /* ─────────────────────────── BOTTOM NAV ─────────────────────────── */
+  .nav {
+    flex-shrink: 0;
+    background: #0e0e0e;
+    padding: 12px 18px 22px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .nav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: rgba(233, 196, 75, 0.55);
+    font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+    transition: color 0.1s;
+  }
+  .nav-btn.active { color: #e9c44b; }
+  .nav-btn:active { transform: translateY(1px); }
+  .nav-btn svg { display: block; }
+
+  /* ─────────────────────────── CONTENT BODY ─────────────────────────── */
+  .body { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+
+  /* ─────────────────────────── SHARED ─────────────────────────── */
+  .section-band {
+    background: #e9c44b;
+    padding: 10px 22px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #0e0e0e;
+    border-top: 2px solid #0e0e0e; border-bottom: 2px solid #0e0e0e;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .section-band-dark {
+    background: #0e0e0e; color: #e9c44b;
+    padding: 8px 22px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .row {
+    padding: 14px 22px;
+    background: #fffaf0;
+    border-bottom: 1.5px solid rgba(14,14,14,0.08);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .row-alt { background: #f1ecdf; }
+  .row:last-child { border-bottom: none; }
+
+  /* avatars */
+  .ava {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #0e0e0e; color: #e9c44b;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Funnel Display'; font-weight: 700; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .ava-lg { width: 56px; height: 56px; font-size: 22px; }
+  .ava-outline {
+    background: transparent; color: #0e0e0e;
+    border: 2px solid #0e0e0e;
+  }
+
+  /* chips & pills */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 999px;
+    background: transparent; color: #0e0e0e;
+    border: 2px solid #0e0e0e;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: transform 0.04s, box-shadow 0.04s;
+    cursor: pointer;
+  }
+  .chip-active { background: #0e0e0e; color: #e9c44b; }
+  .chip-mustard { background: #e9c44b; color: #0e0e0e; }
+  .chip:active { transform: translate(1px, 1px); }
+
+  /* keypad keys — fill grid cell, never overflow */
+  .key {
+    background: #fffaf0; color: #0e0e0e;
+    border: 2px solid #0e0e0e;
+    border-radius: 4px;
+    box-shadow: 3px 3px 0 #0e0e0e;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 26px;
+    min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.04s, box-shadow 0.04s;
+    cursor: pointer;
+    user-select: none;
+  }
+  .key:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 #0e0e0e;
+  }
+  .key-mustard { background: #e9c44b; }
+
+  /* large CTA */
+  .cta {
+    background: #e9c44b; color: #0e0e0e;
+    border: 2px solid #0e0e0e;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 20px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 14px;
+    width: 100%;
+    transition: transform 0.04s, box-shadow 0.04s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .cta:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
+  .cta-disabled { background: rgba(233,196,75,0.5); color: rgba(14,14,14,0.4); box-shadow: 4px 4px 0 rgba(14,14,14,0.2); pointer-events: none; }
+
+  /* ─────────────────────────── KEYPAD SCREEN ─────────────────────────── */
+  .kp-body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+  .kp-top {
+    padding: 12px 18px 10px; background: #fffaf0;
+    border-bottom: 2px solid #0e0e0e;
+    flex-shrink: 0;
+  }
+  .kp-amount {
+    font-family: 'IBM Plex Mono'; font-weight: 700;
+    font-size: 44px; line-height: 1;
+    letter-spacing: -0.03em; color: #0e0e0e;
+    display: flex; align-items: baseline; gap: 4px;
+    margin: 0 0 8px;
+  }
+  .kp-amount.zero { color: rgba(14,14,14,0.25); }
+  .kp-amount .sym { font-size: 30px; opacity: 0.55; }
+  .kp-clear { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: rgba(14,14,14,0.5); }
+  .kp-toprow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .kp-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .kp-cats {
+    display: flex; gap: 6px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding: 2px 18px;
+    margin: 8px -18px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .kp-cats::-webkit-scrollbar { display: none; }
+  .kp-cat {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 6px 12px;
+    border: 2px solid #0e0e0e;
+    border-radius: 999px;
+    background: transparent; color: #0e0e0e;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.04s, box-shadow 0.04s, background 0.04s;
+  }
+  .kp-cat:active { transform: translate(1px, 1px); }
+  .kp-cat.active { background: #e9c44b; box-shadow: 2px 2px 0 #0e0e0e; }
+  .kp-sym-btn {
+    background: transparent; padding: 0; cursor: pointer;
+    font: inherit; color: inherit;
+  }
+  .kp-payers {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 18px;
+    background: #fffaf0;
+    flex-shrink: 0;
+  }
+  .kp-payer { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .kp-payer-name { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(14,14,14,0.5); }
+  .kp-payer.active .kp-payer-name { color: #0e0e0e; }
+  .kp-card-bar {
+    background: #0e0e0e; color: #e9c44b;
+    padding: 8px 18px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .kp-card-bar .swap { color: rgba(233,196,75,0.7); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; }
+  .kp-pad {
+    background: #e9c44b;
+    padding: 12px 14px 14px;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr) auto;
+    gap: 7px;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .kp-cta { grid-column: 1 / -1; margin-top: 4px; }
+
+  /* ─────────────────────────── LEDGER (timeline) ─────────────────────────── */
+  .led-filters { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 2px solid #0e0e0e; }
+  .led-filter {
+    padding: 12px 8px; text-align: center;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(14,14,14,0.5);
+    border-right: 1.5px solid rgba(14,14,14,0.12);
+    background: #fffaf0;
+  }
+  .led-filter:last-child { border-right: none; }
+  .led-filter.active { background: #e9c44b; color: #0e0e0e; }
+  .led-day-band {
+    background: #e9c44b; border-top: 2px solid #0e0e0e; border-bottom: 2px solid #0e0e0e;
+    padding: 8px 22px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .led-day-band.dim { background: #f1ecdf; }
+  .led-day-band .lbl { font-family: 'Funnel Display'; font-weight: 800; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .led-day-band .sub { font-size: 10px; color: rgba(14,14,14,0.55); font-weight: 600; letter-spacing: 0.04em; }
+  .led-day-band .total { font-family: 'IBM Plex Mono'; font-weight: 700; font-size: 16px; }
+  .led-row { display: flex; gap: 12px; align-items: center; padding: 12px 22px; background: #fffaf0; border-bottom: 1.5px solid rgba(14,14,14,0.07); transition: background 0.4s; }
+  .led-row.fresh { background: #fff5d6; animation: freshFlash 1.4s ease-out; }
+  @keyframes freshFlash {
+    0%   { background: #e9c44b; }
+    100% { background: #fffaf0; }
+  }
+  .led-row-title { font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .led-row-sub { font-size: 11px; color: rgba(14,14,14,0.55); font-weight: 500; margin-top: 3px; letter-spacing: 0.02em; }
+  .led-row-amt { font-family: 'IBM Plex Mono'; font-weight: 700; font-size: 16px; text-align: right; line-height: 1.1; }
+  .led-row-amt .dec { font-size: 11px; color: rgba(14,14,14,0.5); }
+
+  /* ─────────────────────────── SUMMARY (dashboard) ─────────────────────────── */
+  .sum-totals { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid #0e0e0e; }
+  .sum-total { padding: 18px 18px 16px; border-right: 2px solid #0e0e0e; }
+  .sum-total:last-child { border-right: none; background: #fffaf0; }
+  .sum-total.primary { background: #e9c44b; }
+  .sum-total .lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(14,14,14,0.6); }
+  .sum-total .amt { font-family: 'Funnel Display'; font-weight: 800; font-size: 32px; letter-spacing: -0.02em; margin-top: 4px; }
+  .sum-total .meta { font-size: 11px; color: rgba(14,14,14,0.6); margin-top: 6px; font-weight: 500; }
+  .sum-cat-row { padding: 12px 22px 14px; background: #fffaf0; border-bottom: 1.5px solid rgba(14,14,14,0.07); }
+  .sum-cat-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .sum-cat-name { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .sum-cat-amt { font-family: 'IBM Plex Mono'; font-weight: 700; font-size: 13px; text-align: right; }
+  .sum-cat-amt .sub { display: block; font-size: 11px; color: rgba(14,14,14,0.5); font-weight: 500; }
+  .sum-bar { height: 8px; background: #f1ecdf; border: 1.5px solid #0e0e0e; display: flex; }
+  .sum-bar-fill { height: 100%; }
+  .sum-bar-fill.gbp { background: #0e0e0e; }
+  .sum-bar-fill.inr { background: #c0392b; }
+  .sum-who-row { padding: 12px 22px; background: #fffaf0; border-bottom: 1.5px solid rgba(14,14,14,0.07); display: flex; gap: 12px; align-items: center; }
+  .sum-who-bar-wrap { flex: 1; }
+  .sum-who-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .sum-who-name { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ─────────────────────────── TOMORROW ─────────────────────────── */
+  .tom-weather { background: #e9c44b; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0e0e0e; }
+  .tom-weather .tmp { font-family: 'Funnel Display'; font-weight: 800; font-size: 22px; }
+  .tom-weather .meta { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: rgba(14,14,14,0.7); margin-top: 3px; text-transform: uppercase; }
+  .tom-weather .sun { text-align: right; }
+  .tom-weather .sun .lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(14,14,14,0.6); }
+  .tom-weather .sun .val { font-family: 'IBM Plex Mono'; font-weight: 700; font-size: 16px; margin-top: 2px; }
+
+  .tom-event { padding: 14px 22px; background: #fffaf0; border-bottom: 1.5px solid rgba(14,14,14,0.07); display: flex; gap: 14px; align-items: flex-start; }
+  .tom-event-time { font-family: 'IBM Plex Mono'; font-weight: 700; font-size: 14px; min-width: 44px; padding-top: 2px; }
+  .tom-event-body { flex: 1; min-width: 0; }
+  .tom-event-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .tom-event-tag {
+    display: inline-block; margin-top: 6px;
+    background: #e9c44b; color: #0e0e0e;
+    padding: 3px 8px; border-radius: 999px;
+    border: 1.5px solid #0e0e0e;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .tom-check {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid #0e0e0e;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+    cursor: pointer;
+  }
+  .tom-check.done { background: #0e0e0e; color: #e9c44b; }
+  .tom-vault-item {
+    padding: 14px 22px; background: #fffaf0;
+    border-bottom: 1.5px solid rgba(14,14,14,0.07);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .tom-vault-name { font-size: 13px; font-weight: 600; }
+  .tom-vault-meta { font-size: 11px; color: rgba(14,14,14,0.5); margin-top: 2px; font-weight: 500; }
+  .tom-vault-arrow { width: 28px; height: 28px; border: 2px solid #0e0e0e; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+
+  /* event add inline */
+  .tom-add-bar { padding: 14px 22px; background: #f1ecdf; border-bottom: 1.5px solid rgba(14,14,14,0.1); display: flex; align-items: center; gap: 10px; }
+  .tom-add-bar input {
+    flex: 1; background: #fffaf0; border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 10px 12px; font-size: 13px; font-weight: 500; outline: none;
+  }
+  .tom-add-bar button {
+    background: #0e0e0e; color: #e9c44b;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  /* ─────────────────────────── SHEET / MODAL ─────────────────────────── */
+  .backdrop {
+    position: absolute; inset: 0; background: rgba(14,14,14,0.45);
+    z-index: 100;
+    animation: fadeIn 0.18s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #fffaf0;
+    border-top: 2px solid #0e0e0e;
+    z-index: 101;
+    animation: slideUp 0.26s cubic-bezier(0.2, 0.7, 0.3, 1);
+    padding: 22px;
+  }
+  .sheet-title { font-family: 'Funnel Display'; font-weight: 800; font-size: 18px; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 4px; }
+  .sheet-sub { font-size: 11px; color: rgba(14,14,14,0.6); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin-bottom: 16px; }
+  .sheet-opt {
+    padding: 14px;
+    border: 2px solid #0e0e0e;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background: #fffaf0;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+    transition: transform 0.04s, box-shadow 0.04s;
+  }
+  .sheet-opt:hover { box-shadow: 3px 3px 0 #0e0e0e; }
+  .sheet-opt.selected { background: #e9c44b; box-shadow: 3px 3px 0 #0e0e0e; }
+  .sheet-opt-label { font-family: 'Funnel Display'; font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+  .sheet-opt-sub { font-size: 11px; color: rgba(14,14,14,0.6); margin-top: 3px; }
+  .sheet-opt-mark {
+    width: 22px; height: 22px; border: 2px solid #0e0e0e;
+    border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #fffaf0;
+  }
+  .sheet-opt.selected .sheet-opt-mark { background: #0e0e0e; color: #e9c44b; }
+
+  /* settings */
+  .settings-row {
+    padding: 14px 22px; background: #fffaf0;
+    border-bottom: 1.5px solid rgba(14,14,14,0.08);
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+  }
+  .settings-row:active { background: #f1ecdf; }
+  .settings-label { font-size: 14px; font-weight: 600; }
+  .settings-value { font-size: 13px; color: rgba(14,14,14,0.55); font-weight: 500; }
+  .settings-action {
+    padding: 16px 22px; background: #fffaf0;
+    border-bottom: 1.5px solid rgba(14,14,14,0.08);
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .settings-action.danger { color: #c0392b; }
+  .settings-action:active { background: #f1ecdf; }
+  .h-gear {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(233,196,75,0.7);
+    margin-left: 8px;
+  }
+  .h-gear:active { color: #e9c44b; }
+  .h-back {
+    color: #e9c44b;
+    font-family: 'Funnel Display'; font-weight: 700; font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  /* wrap screen */
+  .wrap-block {
+    padding: 18px 22px; background: #fffaf0;
+    border-bottom: 2px solid #0e0e0e;
+  }
+  .wrap-block .lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(14,14,14,0.55); margin-bottom: 6px; }
+  .wrap-stat-row { display: flex; gap: 10px; justify-content: space-between; }
+  .wrap-stat { flex: 1; }
+  .wrap-stat .v { font-family: 'Funnel Display'; font-weight: 800; font-size: 24px; letter-spacing: -0.01em; }
+  .wrap-stat .k { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(14,14,14,0.55); margin-top: 2px; }
+  .wrap-settle-row { padding: 14px 22px; background: #fffaf0; border-bottom: 1.5px solid rgba(14,14,14,0.07); display: flex; align-items: center; gap: 12px; }
+
+  /* wrap screen */
+  .wrap-hero {
+    background: #e9c44b; padding: 28px 22px; border-bottom: 2px solid #0e0e0e;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .wrap-hero-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+  .wrap-hero-amt { font-family: 'Funnel Display'; font-weight: 900; font-size: 56px; letter-spacing: -0.03em; line-height: 1; }
+  .wrap-hero-sub { font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+  /* photo lightbox */
+  .lightbox {
+    position: absolute; inset: 0; z-index: 200;
+    background: rgba(14,14,14,0.92);
+    display: flex; flex-direction: column;
+    animation: fadeIn 0.2s ease;
+  }
+  .lightbox-img-wrap {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+  }
+  .lightbox-img-wrap img {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+    border: 2px solid #e9c44b;
+    box-shadow: 6px 6px 0 #0e0e0e;
+  }
+  .lightbox-footer {
+    background: #0e0e0e; padding: 16px 22px max(22px, env(safe-area-inset-bottom));
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .lightbox-meta {
+    color: #e9c44b; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .lightbox-close {
+    background: #e9c44b; color: #0e0e0e;
+    padding: 10px 18px; border-radius: 4px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    border: 2px solid #0e0e0e;
+    box-shadow: 3px 3px 0 #0e0e0e;
+  }
+  .lightbox-close:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #0e0e0e; }
+  .led-photo-badge {
+    background: #e9c44b;
+    border: 1.5px solid #0e0e0e;
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 10px;
+    margin-left: 6px;
+    display: inline-flex; align-items: center; gap: 3px;
+    cursor: pointer;
+  }
+
+  /* toast */
+  .toast {
+    position: absolute; left: 50%; bottom: 100px;
+    transform: translateX(-50%);
+    background: #0e0e0e; color: #e9c44b;
+    border: 2px solid #0e0e0e;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
+    padding: 12px 18px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    z-index: 90;
+    animation: toastIn 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
+    white-space: nowrap;
+  }
+  @keyframes toastIn {
+    from { transform: translate(-50%, 20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+
+<script>
+  // Register service worker — works on localhost and HTTPS.
+  // On phones over LAN HTTP, this silently fails (still gets localStorage).
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+
+<script type="text/babel" data-presets="react">
+
+const { useState, useMemo, useEffect, useRef } = React;
+
+/* ════════════════════════════════════════════════════════════════════
+   PERSISTENCE & NETWORK
+   ════════════════════════════════════════════════════════════════════ */
+
+function cleanForStorage(value) {
+  // Strip photo data URLs (huge) before persisting; keep a `hasPhoto` flag.
+  if (Array.isArray(value)) {
+    return value.map((item) => {
+      if (item && typeof item === 'object' && 'photo' in item) {
+        const { photo, ...rest } = item;
+        return { ...rest, hasPhoto: !!photo };
+      }
+      return item;
+    });
+  }
+  return value;
+}
+
+function writeNow(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(cleanForStorage(value)));
+    return true;
+  } catch (e) {
+    console.warn('persist failed', key, e);
+    return false;
+  }
+}
+
+/* IndexedDB for photo data URLs (too large for localStorage) */
+const IDB_NAME = 'dadpaid';
+const IDB_STORE = 'photos';
+
+function openPhotoDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function putPhoto(id, dataUrl) {
+  try {
+    const db = await openPhotoDB();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(dataUrl, id);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) { console.warn('putPhoto failed', e); }
+}
+
+async function getPhoto(id) {
+  try {
+    const db = await openPhotoDB();
+    return await new Promise((res, rej) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(id);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => rej(req.error);
+    });
+  } catch (e) { console.warn('getPhoto failed', e); return null; }
+}
+
+async function deletePhoto(id) {
+  try {
+    const db = await openPhotoDB();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).delete(id);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch (e) { console.warn('deletePhoto failed', e); }
+}
+
+function usePhoto(id, hasPhoto) {
+  const [src, setSrc] = useState(null);
+  useEffect(() => {
+    if (!id || !hasPhoto) { setSrc(null); return; }
+    let alive = true;
+    getPhoto(id).then((url) => { if (alive) setSrc(url); });
+    return () => { alive = false; };
+  }, [id, hasPhoto]);
+  return src;
+}
+
+function usePersistedState(key, initial) {
+  const [state, setStateRaw] = useState(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw == null) return initial;
+      return JSON.parse(raw);
+    } catch { return initial; }
+  });
+
+  // Wrap setState so EVERY mutation writes to localStorage synchronously,
+  // before React schedules the re-render. This means a refresh immediately
+  // after an action will always see the latest data.
+  const setState = (next) => {
+    setStateRaw((prev) => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      writeNow(key, resolved);
+      return resolved;
+    });
+  };
+
+  // Also persist once on mount in case seed data was just hydrated.
+  useEffect(() => {
+    writeNow(key, state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return [state, setState];
+}
+
+function useOnline() {
+  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  useEffect(() => {
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
+  return online;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SEED DATA
+   ════════════════════════════════════════════════════════════════════ */
+
+const FAMILY = {
+  members: [
+    { id: 'ami',   name: 'Ami',   initial: 'A' },
+    { id: 'sahil', name: 'Sahil', initial: 'S' },
+    { id: 'ketan', name: 'Ketan', initial: 'K' },
+  ],
+  cards: [
+    { id: 'amex',  owner: 'ami',   nick: 'Amex Plat',  last4: '8832' },
+    { id: 'cash-a',owner: 'ami',   nick: 'Cash',       last4: ''     },
+    { id: 'icici', owner: 'sahil', nick: 'ICICI Deb',  last4: '1234' },
+    { id: 'cash-s',owner: 'sahil', nick: 'Cash',       last4: ''     },
+    { id: 'hdfc',  owner: 'ketan', nick: 'HDFC Forex', last4: '4521' },
+    { id: 'cash-k',owner: 'ketan', nick: 'Cash',       last4: ''     },
+  ],
+};
+
+const TRIP = {
+  name: "LONDON DEC '25",
+  shortName: 'LONDON',
+  startDate: '2025-12-15',
+  endDate:   '2025-12-22',
+  totalDays: 8,
+  currentDay: 4,
+  currencies: ['GBP'],
+  defaultSplit: 'everyone',
+  presets: [
+    { label: 'Tube',   amount: 280, currency: 'GBP', category: 'Travel'   },
+    { label: 'Coffee', amount: 400, currency: 'GBP', category: 'Food'     },
+    { label: 'Pub',    amount: 1500,currency: 'GBP', category: 'Food'     },
+  ],
+};
+
+// amounts stored in pence/paise (integers). Currency is GBP or INR.
+const SEED_EXPENSES = [
+  // Pre-trip
+  { id: 'e1', date: '2025-10-12', preTrip: true,  payer: 'ketan', card: 'hdfc', amount: 84000,  currency: 'GBP', title: 'The Hoxton Holborn · 6 nights', category: 'Hotel'    },
+  { id: 'e2', date: '2025-11-04', preTrip: true,  payer: 'ketan', card: 'hdfc', amount: 124000, currency: 'GBP', title: 'BA flights · DEL → LHR',         category: 'Travel'   },
+  { id: 'e3', date: '2025-11-22', preTrip: true,  payer: 'ami',   card: 'amex', amount: 18000,  currency: 'GBP', title: 'Travel insurance',               category: 'Other'    },
+
+  // Day 1 — Dec 15
+  { id: 'e4', date: '2025-12-15', payer: 'ketan', card: 'hdfc',  amount: 6800,  currency: 'GBP', title: 'Heathrow Express',  category: 'Travel'      },
+  { id: 'e5', date: '2025-12-15', payer: 'ami',   card: 'amex',  amount: 2900,  currency: 'GBP', title: 'Pret · breakfast',  category: 'Food'        },
+  { id: 'e6', date: '2025-12-15', payer: 'ketan', card: 'hdfc',  amount: 14700, currency: 'GBP', title: 'Dishoom Shoreditch',category: 'Food'        },
+
+  // Day 2 — Dec 16
+  { id: 'e7', date: '2025-12-16', payer: 'ami',   card: 'amex',  amount: 840,   currency: 'GBP', title: 'Tube · day pass',   category: 'Travel'      },
+  { id: 'e8', date: '2025-12-16', payer: 'sahil', card: 'cash-s',amount: 1250,  currency: 'GBP', title: 'British Museum café',category: 'Food'       },
+  { id: 'e9', date: '2025-12-16', payer: 'ami',   card: 'amex',  amount: 4200,  currency: 'GBP', title: 'Borough Market lunch',category: 'Food'      },
+  { id: 'e10',date: '2025-12-16', payer: 'ketan', card: 'hdfc',  amount: 7800,  currency: 'GBP', title: 'Hawksmoor Seven Dials',category: 'Food'     },
+
+  // Day 3 — Dec 17
+  { id: 'e11',date: '2025-12-17', payer: 'ami',   card: 'amex',  amount: 18000, currency: 'GBP', title: 'Liberty London',    category: 'Shopping'    },
+  { id: 'e12',date: '2025-12-17', payer: 'sahil', card: 'icici', amount: 1450,  currency: 'GBP', title: 'Monmouth coffee',   category: 'Food'        },
+  { id: 'e13',date: '2025-12-17', payer: 'ketan', card: 'hdfc',  amount: 9200,  currency: 'GBP', title: 'Brasserie Zédel',   category: 'Food'        },
+  { id: 'e14',date: '2025-12-17', payer: 'ami',   card: 'amex',  amount: 840,   currency: 'GBP', title: 'Tube · day pass',   category: 'Travel'      },
+
+  // Day 4 — Dec 18 (today)
+  { id: 'e15',date: '2025-12-18', payer: 'sahil', card: 'cash-s',amount: 800,   currency: 'GBP', title: 'Pret coffee',       category: 'Food'        },
+  { id: 'e16',date: '2025-12-18', payer: 'ami',   card: 'amex',  amount: 280,   currency: 'GBP', title: 'Tube · single',     category: 'Travel'      },
+  { id: 'e17',date: '2025-12-18', payer: 'ami',   card: 'amex',  amount: 4200,  currency: 'GBP', title: 'Lunch · Padella',   category: 'Food'        },
+];
+
+const SEED_EVENTS = [
+  { id: 'v1', date: '2025-12-19', time: '09:30', title: 'British Museum · timed entry', tag: 'TICKETS IN VAULT', done: false },
+  { id: 'v2', date: '2025-12-19', time: '13:00', title: 'Dishoom Covent Garden',         tag: 'BOOKED #84210',    done: false },
+  { id: 'v3', date: '2025-12-19', time: '15:30', title: 'V&A Museum',                    tag: null,               done: false },
+  { id: 'v4', date: '2025-12-19', time: '19:00', title: 'The Lion King · Lyceum',        tag: 'TICKETS IN VAULT', done: false },
+];
+
+const SEED_VAULT = [
+  { id: 'p1', name: 'The Hoxton confirmation', meta: '218 KB · PDF' },
+  { id: 'p2', name: 'BA boarding passes',      meta: '442 KB · PDF' },
+  { id: 'p3', name: 'Lion King e-tickets',     meta: '186 KB · PDF' },
+  { id: 'p4', name: 'Travel insurance',        meta: '624 KB · PDF' },
+];
+
+const CATEGORIES = ['Food', 'Travel', 'Hotel', 'Shopping', 'Activity', 'Tickets', 'Groceries', 'Other'];
+
+/* ════════════════════════════════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════════════════════════════════ */
+
+function fmtMajor(integerMinor, currency) {
+  const n = Math.abs(integerMinor);
+  const major = Math.floor(n / 100);
+  if (currency === 'INR') {
+    const s = major.toString();
+    if (s.length <= 3) return s;
+    const last3 = s.slice(-3);
+    const rest = s.slice(0, -3);
+    return rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
+  }
+  return major.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function fmtMinor(integerMinor) { return (Math.abs(integerMinor) % 100).toString().padStart(2, '0'); }
+function symbol(c) { return c === 'INR' ? '₹' : '£'; }
+
+function fmtFull(minorAmount, currency, opts = {}) {
+  const sym = symbol(currency);
+  const maj = fmtMajor(minorAmount, currency);
+  const min = fmtMinor(minorAmount);
+  if (opts.compact && min === '00') return `${sym}${maj}`;
+  return `${sym}${maj}.${min}`;
+}
+
+function dayLabel(dateStr, currentDateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date(currentDateStr + 'T00:00:00');
+  const diff = Math.round((today - d) / 86400000);
+  if (diff === 0) return 'TODAY';
+  if (diff === 1) return 'YESTERDAY';
+  return d.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase() + ' ' + d.getDate();
+}
+
+function memberOf(id) { return FAMILY.members.find(m => m.id === id); }
+function cardsOf(payerId) { return FAMILY.cards.filter(c => c.owner === payerId); }
+function cardOf(cardId) { return FAMILY.cards.find(c => c.id === cardId); }
+
+function totalFor(expenses, opts = {}) {
+  let total = 0;
+  for (const e of expenses) {
+    if (opts.currency && e.currency !== opts.currency) continue;
+    if (opts.payer && e.payer !== opts.payer) continue;
+    if (opts.category && e.category !== opts.category) continue;
+    if (opts.preTrip === true && !e.preTrip) continue;
+    if (opts.preTrip === false && e.preTrip) continue;
+    if (opts.date && e.date !== opts.date) continue;
+    total += e.amount;
+  }
+  return total;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   PRIMITIVES
+   ════════════════════════════════════════════════════════════════════ */
+
+function Avatar({ id, size = 'sm', selected = false }) {
+  const m = memberOf(id);
+  const cls = `ava ${size === 'lg' ? 'ava-lg' : ''} ${!selected && size === 'lg' ? 'ava-outline' : ''}`;
+  return <div className={cls}>{m?.initial || '?'}</div>;
+}
+
+function Header({ title, sub, right, rightSub, onGear, onBack, offline }) {
+  return (
+    <div className="header">
+      {onBack && (
+        <button className="h-back" onClick={onBack}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          BACK
+        </button>
+      )}
+      <div className="header-row">
+        <div>
+          <div className="h-title">{title}</div>
+          {sub && <div className="h-sub">{sub}</div>}
+          {offline && (
+            <div className="h-offline"><span className="pulse" />OFFLINE</div>
+          )}
+        </div>
+        {right && (
+          <div style={{display:'flex', alignItems:'flex-start', gap: 6}}>
+            <div>
+              <div className="h-right">{right}</div>
+              {rightSub && <div className="h-right-sub">{rightSub}</div>}
+            </div>
+            {onGear && (
+              <button className="h-gear" onClick={onGear} aria-label="settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BottomNav({ tab, onTab }) {
+  const tabs = [
+    { id: 'add',     label: 'ADD',     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> },
+    { id: 'log',     label: 'LOG',     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg> },
+    { id: 'summary', label: 'SUMMARY', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="9"/></svg> },
+    { id: 'next',    label: 'NEXT',    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15 9 22 9 17 14 18 22 12 18 6 22 7 14 2 9 9 9 12 2"/></svg> },
+  ];
+  return (
+    <div className="nav">
+      {tabs.map(t => (
+        <button key={t.id} className={`nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => onTab(t.id)}>
+          {t.icon}
+          <span>{t.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   KEYPAD SCREEN
+   ════════════════════════════════════════════════════════════════════ */
+
+const SPLIT_OPTIONS = [
+  { id: 'everyone', label: 'EVERYONE',   sub: 'Split 3 ways · Ami, Sahil, Ketan' },
+  { id: 'parents',  label: 'PARENTS',    sub: 'Ami + Ketan · Sahil goes free' },
+  { id: 'dad',      label: "DAD'S TREAT",sub: 'Ketan covers · no one owes' },
+  { id: 'just-me',  label: 'JUST PAYER', sub: 'Personal · not shared' },
+];
+
+function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear }) {
+  const [amount, setAmount] = useState('');           // raw string: "12" or "12.5" or "12.50"
+  const [currency, setCurrency] = useState('GBP');
+  const [category, setCategory] = useState('Food');
+  const [payer, setPayer] = useState('ketan');
+  const [card, setCard] = useState('hdfc');
+  const [split, setSplit] = useState(TRIP.defaultSplit);
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [photo, setPhoto] = useState(null); // dataURL string
+  const fileRef = useRef(null);
+
+  // payer change → pick first card for that payer
+  useEffect(() => {
+    const cards = cardsOf(payer);
+    if (!cards.find(c => c.id === card)) setCard(cards[0]?.id);
+  }, [payer]);
+
+  const cardObj = cardOf(card);
+  const minorAmount = Math.round(parseFloat(amount || '0') * 100);
+  const isZero = minorAmount === 0;
+  const todayTotal = totalFor(expenses, { date: todayDate, currency: 'GBP' });
+
+  // parse display parts
+  const [majorStr, decStr] = amount.split('.');
+  const hasDot = amount.includes('.');
+  const majorDisplay = amount ? fmtMajor(parseInt(majorStr || '0', 10) * 100, currency) : '0';
+
+  function press(d) {
+    // cap raw length
+    if (amount.length >= 12) return;
+    // cap decimal places to 2
+    if (hasDot) {
+      const dec = amount.split('.')[1] || '';
+      if (dec.length >= 2) return;
+    }
+    // block leading zeros like "00" but allow "0." and "0.5"
+    if (amount === '0' && d !== '0') {
+      setAmount(d);
+      return;
+    }
+    if (!amount && d === '0') {
+      setAmount('0');
+      return;
+    }
+    setAmount(amount + d);
+  }
+  function decimal() {
+    if (hasDot) return;
+    setAmount((amount || '0') + '.');
+  }
+  function del() {
+    setAmount(amount.slice(0, -1));
+  }
+  function clear() { setAmount(''); }
+
+  function openCamera() {
+    fileRef.current?.click();
+  }
+  function onPhotoPicked(ev) {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhoto(reader.result);
+      onToast('📎 Photo attached');
+    };
+    reader.readAsDataURL(file);
+    ev.target.value = ''; // allow re-pick of same file
+  }
+  function clearPhoto() { setPhoto(null); }
+
+  function submit() {
+    if (isZero) return;
+    const now = Date.now();
+    const e = {
+      id: 'e' + now,
+      ts: now, // for sort order
+      date: todayDate,
+      payer, card,
+      amount: minorAmount,
+      currency,
+      title: category,
+      category,
+      split,
+      photo,
+    };
+    onAdd(e);
+    const m = memberOf(payer);
+    onToast(`+ ${fmtFull(minorAmount, currency)} · ${m.name}`);
+    setAmount('');
+    setPhoto(null);
+  }
+
+  return (
+    <>
+      <Header
+        title="DAD PAID"
+        sub={`${TRIP.shortName} · ${fmtFull(todayTotal, 'GBP')} so far today`}
+        right={`D ${TRIP.currentDay} / ${TRIP.totalDays}`}
+        onGear={onGear}
+        offline={!online}
+      />
+
+      <div className="kp-body">
+        {/* AMOUNT */}
+        <div className="kp-top">
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap: 10}}>
+            <div className={`kp-amount ${isZero ? 'zero' : ''}`}>
+              <button
+                className="kp-sym-btn sym"
+                onClick={() => setCurrency(currency === 'GBP' ? 'INR' : 'GBP')}
+                aria-label="toggle currency"
+              >{symbol(currency)}</button>
+              {amount === '' ? (
+                <span>0</span>
+              ) : (
+                <span>{majorDisplay}{hasDot && '.'}{decStr || ''}</span>
+              )}
+            </div>
+            {!isZero && <button className="kp-clear" onClick={clear} style={{flexShrink:0}}>CLEAR ✕</button>}
+          </div>
+
+          {/* category horizontal scroll */}
+          <div className="kp-cats">
+            {CATEGORIES.map(c => (
+              <button
+                key={c}
+                className={`kp-cat ${category === c ? 'active' : ''}`}
+                onClick={() => setCategory(c)}
+              >
+                {c.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {/* split + photo */}
+          <div style={{display:'flex', gap: 8, marginTop: 8}}>
+            <button
+              className="chip chip-active"
+              onClick={() => setSplitOpen(true)}
+              style={{flex: 1, justifyContent:'space-between'}}
+            >
+              <span>SPLIT · {SPLIT_OPTIONS.find(o => o.id === split).label}</span>
+              <span>▾</span>
+            </button>
+            <button
+              className={`chip ${photo ? 'chip-active' : ''}`}
+              onClick={openCamera}
+              aria-label="attach photo"
+              style={{flexShrink:0, padding: '6px 12px'}}
+            >
+              {photo ? '📎 PHOTO' : '+ 📎'}
+            </button>
+          </div>
+        </div>
+
+        {/* PAYERS */}
+        <div className="kp-payers">
+          {FAMILY.members.map(m => (
+            <button key={m.id} className={`kp-payer ${payer === m.id ? 'active' : ''}`} onClick={() => setPayer(m.id)}>
+              <Avatar id={m.id} size="lg" selected={payer === m.id} />
+              <div className="kp-payer-name">{m.name}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* CARD BAR */}
+        <div className="kp-card-bar">
+          <span>■ {cardObj ? `${cardObj.nick.toUpperCase()}${cardObj.last4 ? ' · ' + cardObj.last4 : ''}` : 'NO CARD'}</span>
+          <button className="swap" onClick={() => {
+            const cards = cardsOf(payer);
+            const idx = cards.findIndex(c => c.id === card);
+            setCard(cards[(idx + 1) % cards.length].id);
+          }}>SWAP ›</button>
+        </div>
+
+        {/* KEYPAD */}
+        <div className="kp-pad">
+          {[1,2,3,4,5,6,7,8,9].map(n => (
+            <button key={n} className="key" onClick={() => press(String(n))}>{n}</button>
+          ))}
+          <button className="key" onClick={decimal} aria-label="decimal point">.</button>
+          <button className="key" onClick={() => press('0')}>0</button>
+          <button className="key" onClick={del}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+              <line x1="18" y1="9" x2="12" y2="15"/>
+              <line x1="12" y1="9" x2="18" y2="15"/>
+            </svg>
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={onPhotoPicked}
+            style={{display:'none'}}
+          />
+          <button className={`cta kp-cta ${isZero ? 'cta-disabled' : ''}`} onClick={submit}>
+            ADD →
+          </button>
+        </div>
+      </div>
+
+      {/* SPLIT SHEET */}
+      {splitOpen && (
+        <>
+          <div className="backdrop" onClick={() => setSplitOpen(false)} />
+          <div className="sheet">
+            <div className="sheet-title">SPLIT</div>
+            <div className="sheet-sub">Who's this expense for?</div>
+            {SPLIT_OPTIONS.map(o => (
+              <div key={o.id} className={`sheet-opt ${split === o.id ? 'selected' : ''}`} onClick={() => { setSplit(o.id); setTimeout(() => setSplitOpen(false), 120); }}>
+                <div>
+                  <div className="sheet-opt-label">{o.label}</div>
+                  <div className="sheet-opt-sub">{o.sub}</div>
+                </div>
+                <div className="sheet-opt-mark">{split === o.id ? '✓' : ''}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   LEDGER (Timeline)
+   ════════════════════════════════════════════════════════════════════ */
+
+function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto }) {
+  const [filter, setFilter] = useState('all'); // all | mine | gbp | inr
+  const filtered = useMemo(() => {
+    return expenses.filter(e => {
+      if (filter === 'gbp' && e.currency !== 'GBP') return false;
+      if (filter === 'inr' && e.currency !== 'INR') return false;
+      return true;
+    });
+  }, [expenses, filter]);
+
+  const preTrip = filtered.filter(e => e.preTrip);
+  const inTrip  = filtered.filter(e => !e.preTrip);
+
+  // group in-trip by date, descending; within day, newest first
+  const byDate = useMemo(() => {
+    const map = {};
+    for (const e of inTrip) {
+      map[e.date] = map[e.date] || [];
+      map[e.date].push(e);
+    }
+    const dates = Object.keys(map).sort((a, b) => b.localeCompare(a));
+    return dates.map(d => ({
+      date: d,
+      items: map[d].sort((a, b) => (b.ts || 0) - (a.ts || 0) || b.id.localeCompare(a.id))
+    }));
+  }, [inTrip]);
+
+  const totalAll = totalFor(filtered, { currency: 'GBP' });
+
+  return (
+    <>
+      <Header
+        title="THE LEDGER"
+        sub={`${TRIP.shortName} · DAY ${TRIP.currentDay} OF ${TRIP.totalDays}`}
+        right={`${expenses.length}`}
+        rightSub="ENTRIES"
+        onGear={onGear}
+        offline={!online}
+      />
+
+      <div className="body">
+        <div className="led-filters">
+          {[['all','ALL'],['mine','MINE'],['gbp','£ GBP'],['inr','₹ INR']].map(([id, lbl]) => (
+            <button key={id} className={`led-filter ${filter === id ? 'active' : ''}`} onClick={() => setFilter(id)}>{lbl}</button>
+          ))}
+        </div>
+
+        {/* Pre-trip */}
+        {preTrip.length > 0 && (
+          <>
+            <div className="led-day-band dim">
+              <div>
+                <div className="lbl">BEFORE TRIP</div>
+                <div className="sub">Hotels · flights · advance</div>
+              </div>
+              <div className="total">{fmtFull(totalFor(preTrip, { currency: 'GBP' }), 'GBP', { compact: true })}</div>
+            </div>
+            {preTrip.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} />)}
+          </>
+        )}
+
+        {/* By day */}
+        {byDate.map(({ date, items }) => {
+          const dt = totalFor(items, { currency: 'GBP' });
+          return (
+            <div key={date}>
+              <div className={`led-day-band ${date !== todayDate ? 'dim' : ''}`}>
+                <div>
+                  <div className="lbl">{dayLabel(date, todayDate)}</div>
+                  <div className="sub">{date}</div>
+                </div>
+                <div className="total">{fmtFull(dt, 'GBP', { compact: true })}</div>
+              </div>
+              {items.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} />)}
+            </div>
+          );
+        })}
+
+        <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
+          ── end of ledger ── trip total {fmtFull(totalAll, 'GBP')} ──
+        </div>
+      </div>
+    </>
+  );
+}
+
+function LedgerRow({ e, onOpenPhoto }) {
+  const m = memberOf(e.payer);
+  const fresh = e.ts && (Date.now() - e.ts < 2000);
+  const unsynced = e.synced === false;
+  const hasPhoto = e.hasPhoto || e.photo;
+  return (
+    <div className={`led-row ${fresh ? 'fresh' : ''} ${unsynced ? 'led-row-unsynced' : ''}`}>
+      <div className="ava">{m.initial}</div>
+      <div style={{flex: 1, minWidth: 0}}>
+        <div className="led-row-title">
+          {e.title}
+          {hasPhoto && (
+            <button
+              className="led-photo-badge"
+              onClick={(ev) => { ev.stopPropagation(); onOpenPhoto(e); }}
+            >📎</button>
+          )}
+        </div>
+        <div className="led-row-sub">
+          {m.name.toUpperCase()} · {e.category.toUpperCase()}{cardOf(e.card)?.last4 ? ' · ' + cardOf(e.card).last4 : ''}
+          {unsynced && <span style={{marginLeft:6, color:'#c0392b', fontWeight:700, letterSpacing:'0.08em'}}>· OFFLINE</span>}
+        </div>
+      </div>
+      <div className="led-row-amt">
+        {symbol(e.currency)}{fmtMajor(e.amount, e.currency)}<span className="dec">.{fmtMinor(e.amount)}</span>
+      </div>
+    </div>
+  );
+}
+
+function PhotoLightbox({ expense, onClose }) {
+  const src = usePhoto(expense?.id, !!(expense && (expense.hasPhoto || expense.photo)));
+  if (!expense) return null;
+  return (
+    <div className="lightbox" onClick={onClose}>
+      <div className="lightbox-img-wrap">
+        {src ? (
+          <img src={src} alt="receipt" onClick={(e) => e.stopPropagation()} />
+        ) : (
+          <div style={{color:'#e9c44b', fontSize:12, letterSpacing:'0.12em', fontWeight:700, textTransform:'uppercase'}}>
+            Photo not stored on this device
+          </div>
+        )}
+      </div>
+      <div className="lightbox-footer" onClick={(e) => e.stopPropagation()}>
+        <div className="lightbox-meta">{expense.title} · {symbol(expense.currency)}{fmtMajor(expense.amount, expense.currency)}.{fmtMinor(expense.amount)}</div>
+        <button className="lightbox-close" onClick={onClose}>CLOSE</button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SUMMARY (Dashboard)
+   ════════════════════════════════════════════════════════════════════ */
+
+function SummaryScreen({ expenses, todayDate, online, onGear }) {
+  const gbp = totalFor(expenses, { currency: 'GBP' });
+  const inr = totalFor(expenses, { currency: 'INR' });
+
+  // by category (combined display, separate amounts per currency)
+  const byCat = useMemo(() => {
+    const map = {};
+    for (const e of expenses) {
+      if (!map[e.category]) map[e.category] = { GBP: 0, INR: 0 };
+      map[e.category][e.currency] += e.amount;
+    }
+    const totalCat = Object.values(map).reduce((s, v) => s + v.GBP + v.INR, 0);
+    return Object.entries(map)
+      .map(([cat, v]) => ({ cat, ...v, total: v.GBP + v.INR }))
+      .sort((a, b) => b.total - a.total);
+  }, [expenses]);
+
+  const byPerson = useMemo(() => {
+    return FAMILY.members.map(m => {
+      const gbp = totalFor(expenses, { payer: m.id, currency: 'GBP' });
+      const inr = totalFor(expenses, { payer: m.id, currency: 'INR' });
+      return { id: m.id, name: m.name, gbp, inr, total: gbp + inr };
+    }).sort((a, b) => b.total - a.total);
+  }, [expenses]);
+
+  const maxCat = Math.max(...byCat.map(c => c.total), 1);
+  const maxPerson = Math.max(...byPerson.map(p => p.total), 1);
+
+  const CAT_ICONS = { Food:'🍴', Travel:'🚂', Hotel:'🛏', Shopping:'🛍', Activity:'🎟', Tickets:'🎫', Groceries:'🧺', Other:'•' };
+
+  return (
+    <>
+      <Header
+        title="SUMMARY"
+        sub={`${TRIP.shortName} · 15–22 DEC 2025`}
+        right={`D ${TRIP.currentDay}`}
+        rightSub={`/ ${TRIP.totalDays}`}
+        onGear={onGear}
+        offline={!online}
+      />
+
+      <div className="body">
+        {/* TOTALS */}
+        <div className="sum-totals">
+          <div className="sum-total primary">
+            <div className="lbl">GBP SPEND</div>
+            <div className="amt">£{fmtMajor(gbp, 'GBP')}</div>
+            <div className="meta">incl. flights + hotel</div>
+          </div>
+          <div className="sum-total">
+            <div className="lbl">INR SPEND</div>
+            <div className="amt">₹{fmtMajor(inr, 'INR')}</div>
+            <div className="meta">{inr === 0 ? 'No INR yet' : 'Pre-departure'}</div>
+          </div>
+        </div>
+
+        {/* BY CATEGORY */}
+        <div className="section-band-dark">
+          <span>BY CATEGORY</span>
+          <span>SORTED</span>
+        </div>
+        {byCat.map(c => (
+          <div key={c.cat} className="sum-cat-row">
+            <div className="sum-cat-head">
+              <div className="sum-cat-name">{CAT_ICONS[c.cat]} {c.cat}</div>
+              <div className="sum-cat-amt">
+                {c.GBP > 0 && <span>£{fmtMajor(c.GBP, 'GBP')}</span>}
+                {c.GBP > 0 && c.INR > 0 && <span> + </span>}
+                {c.INR > 0 && <span>₹{fmtMajor(c.INR, 'INR')}</span>}
+              </div>
+            </div>
+            <div className="sum-bar">
+              <div className="sum-bar-fill gbp" style={{width: (c.GBP / maxCat * 100) + '%'}} />
+              <div className="sum-bar-fill inr" style={{width: (c.INR / maxCat * 100) + '%'}} />
+            </div>
+          </div>
+        ))}
+
+        {/* WHO PAID */}
+        <div className="section-band-dark">
+          <span>WHO PAID</span>
+          <span>BY PERSON</span>
+        </div>
+        {byPerson.map(p => (
+          <div key={p.id} className="sum-who-row">
+            <Avatar id={p.id} />
+            <div className="sum-who-bar-wrap">
+              <div className="sum-who-head">
+                <div className="sum-who-name">{p.name}</div>
+                <div className="sum-cat-amt">
+                  {p.gbp > 0 && <span>£{fmtMajor(p.gbp, 'GBP')}</span>}
+                  {p.gbp > 0 && p.inr > 0 && <span> · </span>}
+                  {p.inr > 0 && <span>₹{fmtMajor(p.inr, 'INR')}</span>}
+                </div>
+              </div>
+              <div className="sum-bar">
+                <div className="sum-bar-fill gbp" style={{width: (p.gbp / maxPerson * 100) + '%'}} />
+                <div className="sum-bar-fill inr" style={{width: (p.inr / maxPerson * 100) + '%'}} />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* SETTLEMENT PEEK */}
+        <div className="section-band-dark">
+          <span>SETTLEMENT</span>
+          <span>AT TRIP END</span>
+        </div>
+        <Settlement expenses={expenses} />
+
+        <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
+          ── settlement locks when trip ends ──
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Settlement({ expenses }) {
+  // Compute net per person per currency assuming default split per expense.
+  // Simplified: split rule on each expense — defaults to 'everyone'.
+  const SPLIT_BENEFICIARIES = {
+    'everyone': ['ami','sahil','ketan'],
+    'parents':  ['ami','ketan'],
+    'dad':      ['ketan'],
+    'just-me':  null, // payer only
+  };
+
+  function settleFor(currency) {
+    const net = { ami: 0, sahil: 0, ketan: 0 }; // positive = owed to them
+    for (const e of expenses) {
+      if (e.currency !== currency) continue;
+      const splitId = e.split || 'everyone';
+      const benefs = SPLIT_BENEFICIARIES[splitId] || [e.payer];
+      const perHead = e.amount / benefs.length;
+      net[e.payer] += e.amount;
+      for (const b of benefs) net[b] -= perHead;
+    }
+    // turn into transfers using min-cash-flow simplified greedy
+    const debtors = [];
+    const creditors = [];
+    for (const id of Object.keys(net)) {
+      if (net[id] < -1) debtors.push({ id, v: -net[id] });
+      else if (net[id] > 1) creditors.push({ id, v: net[id] });
+    }
+    debtors.sort((a, b) => b.v - a.v);
+    creditors.sort((a, b) => b.v - a.v);
+    const transfers = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const amt = Math.min(debtors[i].v, creditors[j].v);
+      transfers.push({ from: debtors[i].id, to: creditors[j].id, amount: amt });
+      debtors[i].v -= amt;
+      creditors[j].v -= amt;
+      if (debtors[i].v < 1) i++;
+      if (creditors[j].v < 1) j++;
+    }
+    return transfers;
+  }
+
+  const gbpT = settleFor('GBP');
+  const inrT = settleFor('INR');
+  const all = [...gbpT.map(t => ({...t, currency:'GBP'})), ...inrT.map(t => ({...t, currency:'INR'}))];
+
+  if (all.length === 0) {
+    return (
+      <div className="row" style={{justifyContent:'center', color:'rgba(14,14,14,0.5)', fontSize:13, fontWeight:600, fontStyle:'italic'}}>
+        Everyone's even. Suspicious.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {all.map((t, idx) => (
+        <div key={idx} className="row">
+          <Avatar id={t.from} />
+          <div style={{flex: 1, fontSize: 13, fontWeight: 600}}>
+            <span style={{fontWeight: 700}}>{memberOf(t.from).name}</span>
+            <span style={{color:'rgba(14,14,14,0.5)'}}> owes </span>
+            <span style={{fontWeight: 700}}>{memberOf(t.to).name}</span>
+          </div>
+          <div className="led-row-amt" style={{color:'#c0392b'}}>
+            {symbol(t.currency)}{fmtMajor(Math.round(t.amount), t.currency)}<span className="dec">.{fmtMinor(Math.round(t.amount))}</span>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TOMORROW (Events + Vault)
+   ════════════════════════════════════════════════════════════════════ */
+
+function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGear }) {
+  const [adding, setAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newTime, setNewTime] = useState('10:00');
+
+  function submit() {
+    if (!newTitle.trim()) return;
+    onAddEvent({
+      id: 'v' + Date.now(),
+      date: '2025-12-19',
+      time: newTime,
+      title: newTitle.trim(),
+      tag: null,
+      done: false,
+    });
+    setNewTitle(''); setNewTime('10:00'); setAdding(false);
+  }
+
+  return (
+    <>
+      <Header
+        title="TOMORROW"
+        sub={`FRI 19 DEC · ${events.length} EVENTS`}
+        right="D 5"
+        rightSub="OF 8"
+        onGear={onGear}
+        offline={!online}
+      />
+
+      <div className="body">
+        {/* WEATHER */}
+        <div className="tom-weather">
+          <div>
+            <div className="tmp">4° / 9°</div>
+            <div className="meta">CLOUDY · CHANCE OF RAIN</div>
+          </div>
+          <div className="sun">
+            <div className="lbl">SUNSET</div>
+            <div className="val">15:54</div>
+          </div>
+        </div>
+
+        {/* SCHEDULE */}
+        <div className="section-band-dark">
+          <span>SCHEDULE</span>
+          <span>{events.filter(e => e.tag?.includes('BOOKED') || e.tag?.includes('TICKETS')).length} BOOKED</span>
+        </div>
+        {events.map(e => (
+          <div key={e.id} className="tom-event">
+            <div className="tom-event-time">{e.time}</div>
+            <div className="tom-event-body">
+              <div className="tom-event-title">{e.title}</div>
+              {e.tag && <div className="tom-event-tag">{e.tag}</div>}
+            </div>
+            <button className={`tom-check ${e.done ? 'done' : ''}`} onClick={() => onToggleEvent(e.id)}>
+              {e.done && '✓'}
+            </button>
+          </div>
+        ))}
+
+        {/* ADD EVENT */}
+        {adding ? (
+          <div className="tom-add-bar">
+            <input
+              autoFocus
+              value={newTitle}
+              onChange={(ev) => setNewTitle(ev.target.value)}
+              placeholder="Event title"
+              onKeyDown={(ev) => ev.key === 'Enter' && submit()}
+            />
+            <input
+              value={newTime}
+              onChange={(ev) => setNewTime(ev.target.value)}
+              style={{maxWidth: 76, fontFamily:'IBM Plex Mono', fontWeight:700}}
+              placeholder="10:00"
+            />
+            <button onClick={submit}>ADD</button>
+          </div>
+        ) : (
+          <div className="tom-add-bar" style={{cursor:'pointer'}} onClick={() => setAdding(true)}>
+            <button style={{flex:1, textAlign:'left', background:'transparent', color:'rgba(14,14,14,0.5)', border:'2px dashed #0e0e0e'}}>+ ADD EVENT</button>
+          </div>
+        )}
+
+        {/* VAULT */}
+        <div className="section-band-dark" style={{marginTop: 4}}>
+          <span>VAULT</span>
+          <span>{vault.length} PDFs</span>
+        </div>
+        {vault.map(v => (
+          <div key={v.id} className="tom-vault-item">
+            <div style={{flex:1, minWidth:0}}>
+              <div className="tom-vault-name">{v.name}</div>
+              <div className="tom-vault-meta">{v.meta}</div>
+            </div>
+            <div className="tom-vault-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+            </div>
+          </div>
+        ))}
+
+        <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
+          ── that's tomorrow ──
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SETTINGS
+   ════════════════════════════════════════════════════════════════════ */
+
+function SettingsScreen({ expenses, online, onBack, onEndTrip, onToast, onReset }) {
+  function exportCSV() {
+    const headers = ['date','payer','card','amount','currency','title','category','split','preTrip'];
+    const rows = expenses.map(e => [
+      e.date,
+      memberOf(e.payer)?.name || e.payer,
+      cardOf(e.card)?.nick || '',
+      (e.amount / 100).toFixed(2),
+      e.currency,
+      `"${(e.title||'').replace(/"/g,'""')}"`,
+      e.category || '',
+      e.split || 'everyone',
+      e.preTrip ? '1' : '0',
+    ].join(','));
+    const csv = headers.join(',') + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dadpaid-${TRIP.shortName.toLowerCase()}-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    onToast('CSV downloaded');
+  }
+
+  return (
+    <>
+      <Header title="SETTINGS" sub={`${TRIP.shortName} · ${TRIP.totalDays} DAYS`} onBack={onBack} offline={!online} />
+      <div className="body">
+        <div className="section-band-dark"><span>TRIP</span><span>{TRIP.name}</span></div>
+        <div className="settings-row">
+          <span className="settings-label">Name</span>
+          <span className="settings-value">{TRIP.name}</span>
+        </div>
+        <div className="settings-row">
+          <span className="settings-label">Dates</span>
+          <span className="settings-value">15–22 Dec 2025</span>
+        </div>
+        <div className="settings-row">
+          <span className="settings-label">Currency</span>
+          <span className="settings-value">GBP · single</span>
+        </div>
+        <div className="settings-row">
+          <span className="settings-label">Default split</span>
+          <span className="settings-value">EVERYONE</span>
+        </div>
+
+        <div className="section-band-dark"><span>FAMILY</span><span>{FAMILY.members.length} MEMBERS</span></div>
+        {FAMILY.members.map(m => (
+          <div key={m.id} className="row">
+            <Avatar id={m.id} />
+            <div style={{flex:1, fontSize: 14, fontWeight: 600}}>{m.name}</div>
+            <div style={{fontSize:11, color:'rgba(14,14,14,0.5)', fontWeight:600, letterSpacing:'0.06em'}}>
+              {cardsOf(m.id).filter(c => c.last4).length} CARDS
+            </div>
+          </div>
+        ))}
+
+        <div className="section-band-dark"><span>CARDS</span><span>{FAMILY.cards.filter(c => c.last4).length} ACTIVE</span></div>
+        {FAMILY.cards.filter(c => c.last4).map(c => (
+          <div key={c.id} className="row">
+            <Avatar id={c.owner} />
+            <div style={{flex:1}}>
+              <div style={{fontSize:14, fontWeight:600}}>{c.nick}</div>
+              <div style={{fontSize:11, color:'rgba(14,14,14,0.5)', marginTop:2}}>{memberOf(c.owner).name} · ending {c.last4}</div>
+            </div>
+          </div>
+        ))}
+
+        <div className="section-band-dark"><span>DATA</span><span>{expenses.length} EXPENSES · {online ? 'ONLINE' : 'OFFLINE'}</span></div>
+        <div className="settings-action" onClick={exportCSV}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>EXPORT AS CSV</span>
+        </div>
+        <div className="settings-action" onClick={onReset}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span>RESET TO SEED DATA</span>
+        </div>
+
+        <div className="section-band-dark"><span>TRIP ACTIONS</span></div>
+        <div className="settings-action danger" onClick={onEndTrip}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          <span>END TRIP · COMPUTE SETTLEMENT</span>
+        </div>
+
+        <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
+          dadpaid · v0.1 · made with love
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TRIP WRAP
+   ════════════════════════════════════════════════════════════════════ */
+
+function TripWrapScreen({ expenses, onBack, onToast }) {
+  const total = totalFor(expenses, { currency: 'GBP' });
+  const inTrip = expenses.filter(e => !e.preTrip);
+  const preTrip = expenses.filter(e => e.preTrip);
+  const days = TRIP.totalDays;
+  const avgPerDay = inTrip.length ? Math.round(totalFor(inTrip, { currency:'GBP' }) / days) : 0;
+
+  // top category
+  const catTotals = {};
+  for (const e of expenses) {
+    if (e.currency !== 'GBP') continue;
+    catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
+  }
+  const topCat = Object.entries(catTotals).sort((a,b) => b[1] - a[1])[0];
+
+  // biggest spender
+  const personTotals = FAMILY.members.map(m => ({ id: m.id, name: m.name, paid: totalFor(expenses, { payer: m.id, currency: 'GBP' }) }))
+    .sort((a,b) => b.paid - a.paid);
+
+  return (
+    <>
+      <Header title="TRIP WRAP" sub={`${TRIP.name} · 15–22 DEC 2025`} onBack={onBack} />
+      <div className="body">
+        <div className="wrap-hero">
+          <div className="wrap-hero-label">TOTAL SPENT</div>
+          <div className="wrap-hero-amt">£{fmtMajor(total, 'GBP')}</div>
+          <div className="wrap-hero-sub">over {days} days · {expenses.length} expenses</div>
+        </div>
+
+        <div className="wrap-block">
+          <div className="lbl">BY THE NUMBERS</div>
+          <div className="wrap-stat-row">
+            <div className="wrap-stat">
+              <div className="v">£{fmtMajor(avgPerDay, 'GBP')}</div>
+              <div className="k">per day</div>
+            </div>
+            <div className="wrap-stat">
+              <div className="v">£{fmtMajor(totalFor(preTrip, { currency:'GBP' }), 'GBP')}</div>
+              <div className="k">pre-trip</div>
+            </div>
+            <div className="wrap-stat">
+              <div className="v">{topCat ? topCat[0] : '—'}</div>
+              <div className="k">top category</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="section-band-dark"><span>WHO PAID MOST</span></div>
+        {personTotals.map((p, i) => (
+          <div key={p.id} className="wrap-settle-row">
+            <div className="ava">{memberOf(p.id).initial}</div>
+            <div style={{flex:1, fontSize:14, fontWeight:600}}>
+              {p.name}{i === 0 && <span style={{marginLeft: 8, fontSize: 10, color:'#c0392b', fontWeight:700, letterSpacing:'0.1em'}}>★ MOST</span>}
+            </div>
+            <div className="led-row-amt">£{fmtMajor(p.paid, 'GBP')}<span className="dec">.{fmtMinor(p.paid)}</span></div>
+          </div>
+        ))}
+
+        <div className="section-band-dark"><span>FINAL SETTLEMENT</span><span>LOCKED</span></div>
+        <Settlement expenses={expenses} />
+
+        <div style={{padding: '18px 22px', display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12}}>
+          <button className="cta" onClick={() => onToast('Share image coming soon')}>SHARE</button>
+          <button className="cta" style={{background:'#0e0e0e', color:'#e9c44b'}} onClick={onBack}>DONE</button>
+        </div>
+
+        <div style={{padding: '8px 22px 32px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
+          ── on every trip · dad paid ──
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   APP
+   ════════════════════════════════════════════════════════════════════ */
+
+function App() {
+  const [tab, setTab] = useState('add');
+  const [overlay, setOverlay] = useState(null); // null | 'settings' | 'wrap'
+  const [photoExpense, setPhotoExpense] = useState(null);
+  const [expenses, setExpenses] = usePersistedState('dp.expenses', SEED_EXPENSES);
+  const [events, setEvents] = usePersistedState('dp.events', SEED_EVENTS);
+  const [vault] = useState(SEED_VAULT);
+  const [toast, setToast] = useState(null);
+  const online = useOnline();
+  const todayDate = '2025-12-18';
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  }
+
+  function addExpense(e) {
+    const { photo, ...rest } = e;
+    const record = { ...rest, hasPhoto: !!photo, synced: online };
+    if (photo) putPhoto(e.id, photo);
+    setExpenses(prev => [...prev, record]);
+  }
+  function addEvent(e) {
+    setEvents(prev => [...prev, { ...e, synced: online }].sort((a, b) => a.time.localeCompare(b.time)));
+  }
+  function toggleEvent(id) {
+    setEvents(prev => prev.map(e => e.id === id ? {...e, done: !e.done, synced: e.synced && online} : e));
+  }
+
+  // When connection returns, flush any unsynced records (stubbed: just mark them synced).
+  useEffect(() => {
+    if (!online) return;
+    let flipped = 0;
+    setExpenses(prev => {
+      const next = prev.map(e => {
+        if (e.synced === false) { flipped++; return { ...e, synced: true }; }
+        return e;
+      });
+      return flipped > 0 ? next : prev;
+    });
+    setEvents(prev => {
+      let f = 0;
+      const next = prev.map(e => {
+        if (e.synced === false) { f++; return { ...e, synced: true }; }
+        return e;
+      });
+      return f > 0 ? next : prev;
+    });
+    if (flipped > 0) showToast(`Synced ${flipped} ${flipped === 1 ? 'entry' : 'entries'}`);
+  }, [online]);
+
+  const openSettings = () => setOverlay('settings');
+  const closeOverlay = () => setOverlay(null);
+  const endTrip = () => setOverlay('wrap');
+
+  function resetAll() {
+    if (!confirm('Reset to seed data? All local changes will be lost.')) return;
+    localStorage.removeItem('dp.expenses');
+    localStorage.removeItem('dp.events');
+    setExpenses(SEED_EXPENSES);
+    setEvents(SEED_EVENTS);
+    showToast('Reset to defaults');
+  }
+
+  return (
+    <div className="stage">
+      <div className="phone">
+        <div className="island" />
+        <div className="screen">
+          {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} onAdd={addExpense} onToast={showToast} onGear={openSettings} />}
+          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onOpenPhoto={setPhotoExpense} />}
+          {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} />}
+          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} />}
+          {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onReset={resetAll} />}
+          {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeOverlay} onToast={showToast} />}
+          {!overlay && <BottomNav tab={tab} onTab={setTab} />}
+        </div>
+        <div className="home-bar" />
+        {toast && <div className="toast">{toast}</div>}
+        {photoExpense && <PhotoLightbox expense={photoExpense} onClose={() => setPhotoExpense(null)} />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
