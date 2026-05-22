@@ -25,54 +25,75 @@
   input { font: inherit; color: inherit; }
 
   /* ─────────────────────────── STAGE & PHONE ─────────────────────────── */
+  /* DEFAULT = full-bleed phone. The desktop "phone frame" is opt-in via
+     min-width media query below. This guarantees ANY phone (small, large,
+     foldable) just fills the screen rather than sitting in a tiny iframe. */
   .stage {
-    width: 100vw; min-height: 100vh; min-height: 100dvh;
+    width: 100vw;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     background: #0e0e0e;
     display: flex; align-items: center; justify-content: center;
     padding: 0;
     overflow: hidden;
   }
   .phone {
-    width: 402px; height: 874px; flex-shrink: 0;
-    border-radius: 48px; overflow: hidden; position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    height: 100dvh;
+    flex-shrink: 0;
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
     background: #fffaf0;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.35), 0 0 0 4px #1a1a1a, 0 0 0 5px #2a2a2a;
+    box-shadow: none;
   }
-  .island {
-    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
-    width: 126px; height: 37px; border-radius: 24px; background: #000;
-    z-index: 50; pointer-events: none;
-  }
-  .home-bar {
-    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-    width: 139px; height: 5px; border-radius: 100px;
-    background: rgba(14,14,14,0.3); z-index: 60; pointer-events: none;
-  }
+  .island, .home-bar { display: none; }
+  .header { padding-top: calc(env(safe-area-inset-top) + 8px); }
+  .nav { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
   .screen {
     width: 100%; height: 100%;
     display: flex; flex-direction: column;
     background: #fffaf0; color: #0e0e0e;
     font-weight: 500;
     overflow: hidden;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   .screen *::-webkit-scrollbar { display: none; }
   .screen * { scrollbar-width: none; }
 
-  /* Phone on mobile takes the entire viewport */
-  @media (max-width: 480px) {
-    .stage { padding: 0; min-height: 100dvh; }
+  /* Tablet / desktop preview — only on genuinely large screens. Shows the
+     iPhone-frame mock for design review. Below this threshold = real app. */
+  @media (min-width: 700px) and (min-height: 720px) and (orientation: portrait),
+         (min-width: 900px) and (min-height: 720px) {
+    .stage { padding: 24px; }
     .phone {
-      width: 100vw; height: 100vh; height: 100dvh;
-      border-radius: 0;
-      box-shadow: none;
+      width: 402px; height: 874px;
+      max-height: calc(100dvh - 48px);
+      border-radius: 48px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35), 0 0 0 4px #1a1a1a, 0 0 0 5px #2a2a2a;
     }
-    .island { display: none; }
-    .home-bar { display: none; }
-    .header { padding-top: calc(env(safe-area-inset-top) + 8px); }
-    .nav { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    .island {
+      display: block;
+      position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+      width: 126px; height: 37px; border-radius: 24px; background: #000;
+      z-index: 50; pointer-events: none;
+    }
+    .home-bar {
+      display: block;
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      width: 139px; height: 5px; border-radius: 100px;
+      background: rgba(14,14,14,0.3); z-index: 60; pointer-events: none;
+    }
+    .header { padding-top: 14px; }
+    .nav { padding-bottom: 22px; }
   }
 
-  /* Shorter phones: tighten everything */
+  /* Compact heights (iPhone SE, Mini, small Androids, fold-folded). */
   @media (max-height: 740px) {
     .key { font-size: 22px; box-shadow: 2px 2px 0 #0e0e0e; }
     .key:active { box-shadow: 1px 1px 0 #0e0e0e; }
@@ -81,6 +102,72 @@
     .ava-lg { width: 42px; height: 42px; font-size: 15px; }
     .kp-pad { padding: 8px 10px 12px; gap: 5px; }
     .cta { padding: 10px; font-size: 17px; box-shadow: 3px 3px 0 #0e0e0e; }
+  }
+  @media (max-height: 640px) {
+    .key { font-size: 20px; min-height: 32px; }
+    .kp-amount { font-size: 30px; line-height: 1; }
+    .kp-amount .sym { font-size: 20px; }
+    .ava-lg { width: 36px; height: 36px; font-size: 13px; }
+    .kp-pad { padding: 6px 8px 10px; gap: 4px; }
+    .kp-top { padding: 8px 14px 6px; }
+    .kp-payers { padding: 6px 14px; }
+    .kp-card-bar { padding: 6px 14px; font-size: 10px; }
+    .cta { padding: 8px; font-size: 15px; }
+    .h-title { font-size: 20px; }
+    .h-sub { font-size: 10px; margin-top: 3px; }
+    .header { padding: 8px 18px 8px; }
+    .nav { padding: 8px 14px max(10px, env(safe-area-inset-bottom)); }
+  }
+
+  /* Narrow widths (sub-360px: small Androids, Galaxy A 5.5"). */
+  @media (max-width: 360px) {
+    .header, .row, .led-row, .tom-event, .tom-vault-item, .settings-row, .settings-action,
+    .sum-cat-row, .sum-who-row, .section-band, .section-band-dark, .led-day-band {
+      padding-left: 16px; padding-right: 16px;
+    }
+    .kp-top, .kp-payers, .kp-card-bar { padding-left: 14px; padding-right: 14px; }
+    .kp-cats { padding-left: 14px; padding-right: 14px; margin-left: -14px; margin-right: -14px; }
+    .h-title { font-size: 22px; }
+    .kp-amount { font-size: clamp(28px, 9vw, 44px); }
+  }
+
+  /* Landscape on a phone: keypad is wrong shape, just ask to rotate.
+     Triggers when height is short AND device is landscape (avoids triggering
+     on a portrait phone with the keyboard up). */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .rotate-prompt {
+      position: fixed; inset: 0;
+      background: #0e0e0e; color: #e9c44b;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px;
+      z-index: 999;
+      padding: 24px;
+      text-align: center;
+    }
+    .rotate-prompt .glyph {
+      font-size: 40px;
+      animation: rotateHint 2.4s ease-in-out infinite;
+    }
+    .rotate-prompt .lbl {
+      font-family: 'Funnel Display'; font-weight: 800;
+      font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .rotate-prompt .sub {
+      font-size: 12px; color: rgba(233,196,75,0.7);
+      letter-spacing: 0.06em;
+    }
+    @keyframes rotateHint {
+      0%, 100% { transform: rotate(-15deg); }
+      50%      { transform: rotate(15deg); }
+    }
+  }
+  @media not (max-height: 500px) and (orientation: landscape) {
+    .rotate-prompt { display: none; }
+  }
+  .rotate-prompt { display: none; }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .rotate-prompt { display: flex; }
+    .stage .phone { filter: blur(6px); pointer-events: none; }
   }
 
   /* ─────────────────────────── HEADER ─────────────────────────── */
@@ -91,7 +178,8 @@
   }
   .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .h-title {
-    font-family: 'Funnel Display'; font-weight: 800; font-size: 24px;
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-size: clamp(20px, 6vw, 26px);
     letter-spacing: -0.01em; line-height: 1;
     color: #e9c44b;
   }
@@ -174,7 +262,11 @@
     font-family: 'Funnel Display'; font-weight: 700; font-size: 14px;
     flex-shrink: 0;
   }
-  .ava-lg { width: 56px; height: 56px; font-size: 22px; }
+  .ava-lg {
+    width: clamp(40px, 14vw, 56px);
+    height: clamp(40px, 14vw, 56px);
+    font-size: clamp(15px, 5vw, 22px);
+  }
   .ava-outline {
     background: transparent; color: #0e0e0e;
     border: 2px solid #0e0e0e;
@@ -239,7 +331,7 @@
   }
   .kp-amount {
     font-family: 'IBM Plex Mono'; font-weight: 700;
-    font-size: 44px; line-height: 1;
+    font-size: clamp(28px, 9vw, 48px); line-height: 1;
     letter-spacing: -0.03em; color: #0e0e0e;
     display: flex; align-items: baseline; gap: 4px;
     margin: 0 0 8px;
@@ -2310,6 +2402,11 @@ function App() {
         <div className="home-bar" />
         {toast && <div className="toast">{toast}</div>}
         {photoExpense && <PhotoLightbox expense={photoExpense} onClose={() => setPhotoExpense(null)} />}
+      </div>
+      <div className="rotate-prompt" aria-hidden="true">
+        <div className="glyph">↻</div>
+        <div className="lbl">ROTATE TO PORTRAIT</div>
+        <div className="sub">Dad Paid works best held upright</div>
       </div>
     </div>
   );
