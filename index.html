@@ -1245,22 +1245,17 @@ const SPLIT_PRESETS = [
   { id: 'just-me',  label: 'JUST PAYER', sub: 'No split, payer covers it' },
 ];
 
-function slugify(name) {
-  return name.toLowerCase().trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 24) || 'member';
-}
-
 function initialFor(name) {
   const t = name.trim();
   return (t[0] || '?').toUpperCase();
 }
 
-function uniqueId(existing, base) {
-  let id = base; let n = 2;
-  while (existing.includes(id)) { id = `${base}-${n++}`; }
-  return id;
+function uid(prefix = '') {
+  // Globally unique IDs — works across families without collisions.
+  const raw = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return prefix ? `${prefix}_${raw}` : raw;
 }
 
 /* Step 1 of onboarding: family name + members */
@@ -1315,31 +1310,41 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
     if (!canFinish) return;
     setBusy(true); setErr(null);
     try {
+      // Idempotency: if a previous submit half-finished (members inserted, trip didn't),
+      // detect that here and skip the duplicate inserts.
+      const { data: existingMembers } = await sb.from('family_members')
+        .select('id, name').eq('family_id', familyId);
+      const hasMembers = (existingMembers || []).length > 0;
+
       // 1. update family name
       await sb.from('families').update({ name: familyName.trim() }).eq('id', familyId);
 
-      // 2. insert members with stable slug IDs
-      const memberIds = [];
-      const memberRows = validMembers.map((m, i) => {
-        const id = uniqueId(memberIds, slugify(m.name));
-        memberIds.push(id);
-        return {
-          id, family_id: familyId,
-          name: m.name, initial: m.initial || initialFor(m.name),
+      // 2. insert members with UUID-based IDs (globally unique across all families)
+      let memberByName;
+      if (hasMembers) {
+        // Re-use already-inserted members. Match by trimmed name.
+        memberByName = Object.fromEntries(existingMembers.map((m) => [m.name.trim(), m.id]));
+      } else {
+        const memberRows = validMembers.map((m, i) => ({
+          id: uid('mem'),
+          family_id: familyId,
+          name: m.name,
+          initial: m.initial || initialFor(m.name),
           position: i,
-        };
-      });
-      if (memberRows.length) {
+        }));
         const { error: mErr } = await sb.from('family_members').insert(memberRows);
         if (mErr) throw mErr;
+        memberByName = Object.fromEntries(memberRows.map((m) => [m.name, m.id]));
       }
 
-      // 3. insert cards (lookup owner_member_id by name → id)
-      const memberByName = Object.fromEntries(memberRows.map((m) => [m.name, m.id]));
+      // 3. insert cards (skip any that already exist by nick)
+      const { data: existingCards } = await sb.from('family_cards')
+        .select('nick').eq('family_id', familyId);
+      const existingCardNicks = new Set((existingCards || []).map((c) => c.nick));
       const cardRows = cards
-        .filter((c) => c.nick.trim() && memberByName[c.ownerName])
+        .filter((c) => c.nick.trim() && memberByName[c.ownerName] && !existingCardNicks.has(c.nick.trim()))
         .map((c, i) => ({
-          id: `card-${Date.now()}-${i}`,
+          id: uid('card'),
           family_id: familyId,
           owner_member_id: memberByName[c.ownerName],
           nick: c.nick.trim(),
@@ -1351,17 +1356,21 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
         if (cErr) throw cErr;
       }
 
-      // 4. insert trip
-      const { data: tRow, error: tErr } = await sb.from('trips').insert({
-        family_id: familyId,
-        name: tripName.trim(),
-        short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
-        start_date: startDate,
-        end_date: endDate,
-        primary_currency: currency,
-        default_split: defaultSplit,
-      }).select().single();
-      if (tErr) throw tErr;
+      // 4. insert trip (skip if family already has an active trip)
+      const { data: existingTrips } = await sb.from('trips')
+        .select('id').eq('family_id', familyId).eq('status', 'active').limit(1);
+      if (!existingTrips || existingTrips.length === 0) {
+        const { error: tErr } = await sb.from('trips').insert({
+          family_id: familyId,
+          name: tripName.trim(),
+          short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
+          start_date: startDate,
+          end_date: endDate,
+          primary_currency: currency,
+          default_split: defaultSplit,
+        });
+        if (tErr) throw tErr;
+      }
 
       onComplete();
     } catch (e) {
