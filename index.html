@@ -502,6 +502,100 @@
   .wrap-hero-amt { font-family: 'Funnel Display'; font-weight: 900; font-size: 56px; letter-spacing: -0.03em; line-height: 1; }
   .wrap-hero-sub { font-size: 13px; font-weight: 600; margin-top: 4px; }
 
+  /* login */
+  .login-stage {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    background: #fffaf0;
+    padding: max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
+    justify-content: center;
+  }
+  .login-card {
+    border: 2px solid #0e0e0e;
+    background: #fffaf0;
+    box-shadow: 6px 6px 0 #0e0e0e;
+    padding: 28px 24px 24px;
+    max-width: 360px; width: 100%;
+    margin: 0 auto;
+  }
+  .login-brand { text-align: center; margin-bottom: 24px; }
+  .login-title {
+    font-family: 'Funnel Display'; font-weight: 900; font-size: 38px;
+    letter-spacing: -0.02em; color: #0e0e0e;
+    line-height: 1; padding: 12px 14px;
+    background: #e9c44b; border: 2px solid #0e0e0e;
+    display: inline-block;
+  }
+  .login-tagline {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: rgba(14,14,14,0.55);
+    margin-top: 14px;
+  }
+  .login-form { display: flex; flex-direction: column; gap: 12px; }
+  .login-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: rgba(14,14,14,0.6);
+  }
+  .login-input {
+    background: #f1ecdf; border: 2px solid #0e0e0e;
+    border-radius: 4px; padding: 14px;
+    font-size: 16px; font-weight: 500;
+    font-family: inherit; outline: none;
+    box-shadow: 3px 3px 0 #0e0e0e;
+  }
+  .login-input:focus { background: #fffaf0; }
+  .login-cta {
+    background: #e9c44b; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 14px; margin-top: 4px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 16px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    cursor: pointer; transition: transform 0.04s, box-shadow 0.04s;
+  }
+  .login-cta:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
+  .login-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+  .login-err {
+    background: #c0392b; color: #fffaf0; padding: 10px 12px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    font-size: 12px; font-weight: 600;
+  }
+  .login-help {
+    font-size: 11px; color: rgba(14,14,14,0.55);
+    line-height: 1.5; margin-top: 8px; font-weight: 500;
+  }
+  .login-sent { text-align: center; padding: 8px 0; }
+  .login-sent-line {
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 18px;
+    letter-spacing: 0.06em; margin-bottom: 12px;
+  }
+  .login-sent-meta {
+    font-size: 13px; color: rgba(14,14,14,0.65); line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  .login-back {
+    background: transparent; border: 2px solid #0e0e0e;
+    padding: 10px 16px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* boot/loading */
+  .boot {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: #fffaf0;
+  }
+  .boot-dot {
+    width: 14px; height: 14px; background: #e9c44b;
+    border: 2px solid #0e0e0e; box-shadow: 3px 3px 0 #0e0e0e;
+    animation: bootPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes bootPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.7); }
+  }
+
   /* photo lightbox */
   .lightbox {
     position: absolute; inset: 0; z-index: 200;
@@ -570,6 +664,7 @@
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
 
 <script>
@@ -724,10 +819,203 @@ function useOnline() {
 }
 
 /* ════════════════════════════════════════════════════════════════════
+   SUPABASE — auth, data loader, write queue, realtime, storage
+   ════════════════════════════════════════════════════════════════════ */
+
+const SUPABASE_URL  = 'https://jmkuygwmwbxhgyberhvb.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_dNvbj-zpgGDR6qV05C7AFg_DafSNXhR';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage },
+});
+
+function useAuth() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    sb.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      setUser(data.session?.user || null);
+      setLoading(false);
+    });
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user || null);
+    });
+    return () => { alive = false; subscription.unsubscribe(); };
+  }, []);
+  return { user, loading };
+}
+
+/* DB ↔ client field mapping (DB uses snake_case + _id suffixes). */
+function expenseFromDB(e) {
+  return {
+    id: e.id, date: e.date, preTrip: !!e.pre_trip,
+    payer: e.payer_id, card: e.card_id,
+    amount: e.amount, currency: e.currency,
+    title: e.title, category: e.category, split: e.split,
+    hasPhoto: !!e.has_photo, photoPath: e.photo_path,
+    ts: e.ts, synced: true,
+  };
+}
+function expenseToDB(e, tripId) {
+  return {
+    id: e.id, trip_id: tripId, date: e.date,
+    pre_trip: !!e.preTrip,
+    payer_id: e.payer, card_id: e.card || null,
+    amount: e.amount, currency: e.currency,
+    title: e.title || null, category: e.category || null,
+    split: e.split || 'everyone',
+    has_photo: !!(e.photo || e.hasPhoto),
+    photo_path: e.photoPath || null,
+    ts: e.ts || null,
+  };
+}
+function eventFromDB(v) {
+  return { id: v.id, date: v.date, time: v.time, title: v.title, tag: v.tag, done: !!v.done, synced: true };
+}
+function eventToDB(v, tripId) {
+  return { id: v.id, trip_id: tripId, date: v.date, time: v.time || null, title: v.title, tag: v.tag || null, done: !!v.done };
+}
+
+/* Loader: pulls family/members/cards/active trip/expenses/events/vault. */
+async function loadAll() {
+  const { data: fams, error: fErr } = await sb.from('families').select('*').limit(1);
+  if (fErr || !fams?.length) return null;
+  const fam = fams[0];
+  const [{ data: members }, { data: cards }, { data: trips }] = await Promise.all([
+    sb.from('family_members').select('*').eq('family_id', fam.id).order('position'),
+    sb.from('family_cards').select('*').eq('family_id', fam.id).order('position'),
+    sb.from('trips').select('*').eq('family_id', fam.id).eq('status', 'active').order('start_date', { ascending: false }).limit(1),
+  ]);
+  if (!trips?.length) return { family: fam, members: members || [], cards: cards || [], trip: null, expenses: [], events: [], vault: [] };
+  const trip = trips[0];
+  const [{ data: exps }, { data: evs }, { data: vlt }] = await Promise.all([
+    sb.from('expenses').select('*').eq('trip_id', trip.id).order('date', { ascending: false }),
+    sb.from('events').select('*').eq('trip_id', trip.id).order('time'),
+    sb.from('vault_items').select('*').eq('trip_id', trip.id),
+  ]);
+  return { family: fam, members: members || [], cards: cards || [], trip, expenses: exps || [], events: evs || [], vault: vlt || [] };
+}
+
+/* Mutate FAMILY/TRIP module-level vars from Supabase shape. */
+function applyServerSnapshot(snap) {
+  FAMILY = {
+    id: snap.family.id,
+    members: snap.members.map((m) => ({ id: m.id, name: m.name, initial: m.initial })),
+    cards:   snap.cards.map((c)   => ({ id: c.id, owner: c.owner_member_id, nick: c.nick, last4: c.last4 || '' })),
+  };
+  if (snap.trip) {
+    const days = Math.max(1, Math.round((new Date(snap.trip.end_date) - new Date(snap.trip.start_date)) / 86400000) + 1);
+    TRIP = {
+      ...TRIP,
+      id: snap.trip.id,
+      name: snap.trip.name,
+      shortName: snap.trip.short_name || snap.trip.name,
+      startDate: snap.trip.start_date,
+      endDate:   snap.trip.end_date,
+      totalDays: days,
+      currentDay: TRIP.currentDay,
+      currencies: [snap.trip.primary_currency],
+      defaultSplit: snap.trip.default_split,
+    };
+  }
+}
+
+/* Photo upload: data-URL → blob → storage. Returns storage path. */
+async function uploadPhotoFromDataUrl(dataUrl, familyId, expenseId) {
+  try {
+    const m = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
+    if (!m) return null;
+    const mime = m[1]; const ext = mime.split('/')[1] || 'jpg';
+    const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: mime });
+    const path = `${familyId}/${expenseId}.${ext}`;
+    const { error } = await sb.storage.from('photos').upload(path, blob, { upsert: true, contentType: mime });
+    if (error) { console.warn('photo upload failed', error); return null; }
+    return path;
+  } catch (e) { console.warn('photo upload threw', e); return null; }
+}
+
+async function fetchPhotoFromStorage(path) {
+  if (!path) return null;
+  const { data, error } = await sb.storage.from('photos').createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   LOGIN SCREEN
+   ════════════════════════════════════════════════════════════════════ */
+
+function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  async function submit(e) {
+    if (e) e.preventDefault();
+    if (!email.trim()) return;
+    setBusy(true); setErr(null);
+    try {
+      const { error } = await sb.auth.signInWithOtp({
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin + window.location.pathname },
+      });
+      if (error) setErr(error.message);
+      else setSent(true);
+    } catch (e) { setErr(String(e?.message || e)); }
+    setBusy(false);
+  }
+
+  return (
+    <div className="login-stage">
+      <div className="login-card">
+        <div className="login-brand">
+          <div className="login-title">DAD PAID</div>
+          <div className="login-tagline">Because on every trip — dad paid.</div>
+        </div>
+        {sent ? (
+          <div className="login-sent">
+            <div className="login-sent-line">CHECK YOUR EMAIL</div>
+            <div className="login-sent-meta">We sent a magic link to<br /><strong>{email}</strong></div>
+            <button className="login-back" onClick={() => setSent(false)}>USE A DIFFERENT EMAIL</button>
+          </div>
+        ) : (
+          <form className="login-form" onSubmit={submit}>
+            <label className="login-label">EMAIL</label>
+            <input
+              autoFocus
+              type="email"
+              className="login-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+            {err && <div className="login-err">{err}</div>}
+            <button type="submit" className="login-cta" disabled={busy || !email.trim()}>
+              {busy ? 'SENDING…' : 'SEND MAGIC LINK →'}
+            </button>
+            <div className="login-help">
+              One shared family account. All three phones sign in with the same email. We'll mail you a link — no password.
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
    SEED DATA
    ════════════════════════════════════════════════════════════════════ */
 
-const FAMILY = {
+/* These are mutated by the Supabase loader after sign-in. Kept as `let`
+   so existing components can keep referencing FAMILY.members / TRIP.name
+   without prop-drilling. A version bump in App forces re-renders. */
+let FAMILY = {
+  id: null,
   members: [
     { id: 'ami',   name: 'Ami',   initial: 'A' },
     { id: 'sahil', name: 'Sahil', initial: 'S' },
@@ -743,7 +1031,8 @@ const FAMILY = {
   ],
 };
 
-const TRIP = {
+let TRIP = {
+  id: null,
   name: "LONDON DEC '25",
   shortName: 'LONDON',
   startDate: '2025-12-15',
@@ -1283,8 +1572,17 @@ function LedgerRow({ e, onOpenPhoto }) {
 }
 
 function PhotoLightbox({ expense, onClose }) {
-  const src = usePhoto(expense?.id, !!(expense && (expense.hasPhoto || expense.photo)));
+  const localSrc = usePhoto(expense?.id, !!(expense && (expense.hasPhoto || expense.photo)));
+  const [remoteSrc, setRemoteSrc] = useState(null);
+  useEffect(() => {
+    setRemoteSrc(null);
+    if (localSrc) return;
+    if (expense?.photoPath) {
+      fetchPhotoFromStorage(expense.photoPath).then(setRemoteSrc);
+    }
+  }, [expense?.id, expense?.photoPath, localSrc]);
   if (!expense) return null;
+  const src = localSrc || remoteSrc;
   return (
     <div className="lightbox" onClick={onClose}>
       <div className="lightbox-img-wrap">
@@ -1292,7 +1590,7 @@ function PhotoLightbox({ expense, onClose }) {
           <img src={src} alt="receipt" onClick={(e) => e.stopPropagation()} />
         ) : (
           <div style={{color:'#e9c44b', fontSize:12, letterSpacing:'0.12em', fontWeight:700, textTransform:'uppercase'}}>
-            Photo not stored on this device
+            {expense.photoPath ? 'Loading from cloud…' : 'Photo not stored on this device'}
           </div>
         )}
       </div>
@@ -1616,7 +1914,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
    SETTINGS
    ════════════════════════════════════════════════════════════════════ */
 
-function SettingsScreen({ expenses, online, onBack, onEndTrip, onToast, onReset }) {
+function SettingsScreen({ expenses, online, pendingCount, userEmail, onBack, onEndTrip, onToast, onSignOut }) {
   function exportCSV() {
     const headers = ['date','payer','card','amount','currency','title','category','split','preTrip'];
     const rows = expenses.map(e => [
@@ -1685,14 +1983,22 @@ function SettingsScreen({ expenses, online, onBack, onEndTrip, onToast, onReset 
           </div>
         ))}
 
-        <div className="section-band-dark"><span>DATA</span><span>{expenses.length} EXPENSES · {online ? 'ONLINE' : 'OFFLINE'}</span></div>
+        <div className="section-band-dark"><span>ACCOUNT</span><span>{online ? 'ONLINE' : 'OFFLINE'}</span></div>
+        <div className="settings-row">
+          <span className="settings-label">Signed in as</span>
+          <span className="settings-value">{userEmail}</span>
+        </div>
+        <div className="settings-row">
+          <span className="settings-label">Pending sync</span>
+          <span className="settings-value" style={{color: pendingCount > 0 ? '#c0392b' : undefined}}>
+            {pendingCount > 0 ? `${pendingCount} queued` : 'All synced'}
+          </span>
+        </div>
+
+        <div className="section-band-dark"><span>DATA</span><span>{expenses.length} EXPENSES</span></div>
         <div className="settings-action" onClick={exportCSV}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>EXPORT AS CSV</span>
-        </div>
-        <div className="settings-action" onClick={onReset}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-          <span>RESET TO SEED DATA</span>
         </div>
 
         <div className="section-band-dark"><span>TRIP ACTIONS</span></div>
@@ -1700,9 +2006,13 @@ function SettingsScreen({ expenses, online, onBack, onEndTrip, onToast, onReset 
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
           <span>END TRIP · COMPUTE SETTLEMENT</span>
         </div>
+        <div className="settings-action danger" onClick={onSignOut}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>SIGN OUT</span>
+        </div>
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
-          dadpaid · v0.1 · made with love
+          dadpaid · v0.2 · synced via supabase
         </div>
       </div>
     </>
@@ -1792,67 +2102,196 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
    ════════════════════════════════════════════════════════════════════ */
 
 function App() {
-  const [tab, setTab] = useState('add');
-  const [overlay, setOverlay] = useState(null); // null | 'settings' | 'wrap'
-  const [photoExpense, setPhotoExpense] = useState(null);
-  const [expenses, setExpenses] = usePersistedState('dp.expenses', SEED_EXPENSES);
-  const [events, setEvents] = usePersistedState('dp.events', SEED_EVENTS);
-  const [vault] = useState(SEED_VAULT);
-  const [toast, setToast] = useState(null);
+  const { user, loading: authLoading } = useAuth();
   const online = useOnline();
-  const todayDate = '2025-12-18';
+  const [bootDone, setBootDone] = useState(false);
+  const [, bumpVersion] = useState(0);                 // force re-render after FAMILY/TRIP mutate
+  const forceRender = () => bumpVersion((v) => v + 1);
+
+  const [tab, setTab] = useState('add');
+  const [overlay, setOverlay] = useState(null);        // null | 'settings' | 'wrap'
+  const [photoExpense, setPhotoExpense] = useState(null);
+
+  // Offline-tolerant cache. Hydrates from localStorage instantly; replaced by server on load.
+  const [expenses, setExpenses] = usePersistedState('dp.expenses', []);
+  const [events,   setEvents]   = usePersistedState('dp.events',   []);
+  const [vault,    setVault]    = usePersistedState('dp.vault',    []);
+
+  // Pending-ops queue — every mutation is appended; drained when online + authed.
+  const [pendingOps, setPendingOps] = usePersistedState('dp.pending', []);
+
+  const [toast, setToast] = useState(null);
+  const todayDate = new Date().toISOString().slice(0, 10);
 
   function showToast(msg) {
     setToast(msg);
-    setTimeout(() => setToast(null), 2000);
+    setTimeout(() => setToast(null), 2200);
+  }
+
+  /* ── INITIAL LOAD ────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!user || !online) { if (!user) setBootDone(true); return; }
+    let alive = true;
+    (async () => {
+      try {
+        const snap = await loadAll();
+        if (!alive) return;
+        if (snap) {
+          applyServerSnapshot(snap);
+          setExpenses(snap.expenses.map(expenseFromDB));
+          setEvents(snap.events.map(eventFromDB));
+          setVault(snap.vault.map((v) => ({ id: v.id, name: v.name, meta: v.meta || '' })));
+          // Compute "current day of trip" relative to today.
+          if (snap.trip) {
+            const startMs = new Date(snap.trip.start_date).getTime();
+            const todayMs = new Date(todayDate).getTime();
+            const day = Math.max(1, Math.min(TRIP.totalDays, Math.floor((todayMs - startMs) / 86400000) + 1));
+            TRIP.currentDay = day;
+          }
+          forceRender();
+        }
+      } catch (e) { console.warn('initial load failed', e); }
+      setBootDone(true);
+    })();
+    return () => { alive = false; };
+  }, [user, online]);
+
+  /* ── WRITE QUEUE FLUSHER ─────────────────────────────────────────── */
+  const flushing = useRef(false);
+  useEffect(() => {
+    if (!user || !online || pendingOps.length === 0 || flushing.current) return;
+    flushing.current = true;
+    (async () => {
+      const ops = pendingOps;
+      const remaining = [];
+      let flushed = 0;
+      for (const op of ops) {
+        try {
+          await runQueuedOp(op);
+          flushed++;
+          // mark synced in local state
+          if (op.type === 'expense.insert' || op.type === 'expense.update') {
+            setExpenses((prev) => prev.map((e) => e.id === op.payload.id ? { ...e, synced: true } : e));
+          } else if (op.type === 'event.insert' || op.type === 'event.update') {
+            setEvents((prev) => prev.map((v) => v.id === op.payload.id ? { ...v, synced: true } : v));
+          }
+        } catch (e) {
+          remaining.push({ ...op, attempts: (op.attempts || 0) + 1, lastError: String(e?.message || e) });
+        }
+      }
+      setPendingOps(remaining);
+      flushing.current = false;
+      if (flushed > 0) showToast(`Synced ${flushed} ${flushed === 1 ? 'entry' : 'entries'}`);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, online, pendingOps.length]);
+
+  /* ── REALTIME ────────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!user || !TRIP.id) return;
+    const ch = sb.channel(`trip:${TRIP.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses', filter: `trip_id=eq.${TRIP.id}` }, (p) => {
+        if (p.eventType === 'DELETE') {
+          setExpenses((prev) => prev.filter((e) => e.id !== p.old.id));
+        } else {
+          const incoming = expenseFromDB(p.new);
+          setExpenses((prev) => {
+            const ix = prev.findIndex((e) => e.id === incoming.id);
+            if (ix === -1) return [...prev, incoming];
+            const next = prev.slice(); next[ix] = { ...next[ix], ...incoming }; return next;
+          });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: `trip_id=eq.${TRIP.id}` }, (p) => {
+        if (p.eventType === 'DELETE') {
+          setEvents((prev) => prev.filter((e) => e.id !== p.old.id));
+        } else {
+          const incoming = eventFromDB(p.new);
+          setEvents((prev) => {
+            const ix = prev.findIndex((e) => e.id === incoming.id);
+            if (ix === -1) return [...prev, incoming].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            const next = prev.slice(); next[ix] = { ...next[ix], ...incoming }; return next;
+          });
+        }
+      })
+      .subscribe();
+    return () => { sb.removeChannel(ch); };
+  }, [user, TRIP.id]);
+
+  /* ── MUTATIONS — optimistic + enqueue ────────────────────────────── */
+  function enqueue(op) { setPendingOps((prev) => [...prev, op]); }
+
+  async function runQueuedOp(op) {
+    switch (op.type) {
+      case 'expense.insert': {
+        const { error } = await sb.from('expenses').insert(op.payload);
+        if (error) throw error;
+        // Storage upload if a photo was attached at insert time.
+        if (op.photoDataUrl && FAMILY.id) {
+          const path = await uploadPhotoFromDataUrl(op.photoDataUrl, FAMILY.id, op.payload.id);
+          if (path) await sb.from('expenses').update({ has_photo: true, photo_path: path }).eq('id', op.payload.id);
+        }
+        return;
+      }
+      case 'event.insert': {
+        const { error } = await sb.from('events').insert(op.payload);
+        if (error) throw error;
+        return;
+      }
+      case 'event.update': {
+        const { error } = await sb.from('events').update(op.payload).eq('id', op.payload.id);
+        if (error) throw error;
+        return;
+      }
+      default: console.warn('unknown op', op.type);
+    }
   }
 
   function addExpense(e) {
     const { photo, ...rest } = e;
-    const record = { ...rest, hasPhoto: !!photo, synced: online };
-    if (photo) putPhoto(e.id, photo);
-    setExpenses(prev => [...prev, record]);
-  }
-  function addEvent(e) {
-    setEvents(prev => [...prev, { ...e, synced: online }].sort((a, b) => a.time.localeCompare(b.time)));
-  }
-  function toggleEvent(id) {
-    setEvents(prev => prev.map(e => e.id === id ? {...e, done: !e.done, synced: e.synced && online} : e));
+    const record = { ...rest, hasPhoto: !!photo, synced: false };
+    if (photo) putPhoto(e.id, photo); // local IDB so photo viewer works immediately
+    setExpenses((prev) => [...prev, record]);
+    enqueue({ type: 'expense.insert', payload: expenseToDB(record, TRIP.id), photoDataUrl: photo || null });
   }
 
-  // When connection returns, flush any unsynced records (stubbed: just mark them synced).
-  useEffect(() => {
-    if (!online) return;
-    let flipped = 0;
-    setExpenses(prev => {
-      const next = prev.map(e => {
-        if (e.synced === false) { flipped++; return { ...e, synced: true }; }
-        return e;
-      });
-      return flipped > 0 ? next : prev;
-    });
-    setEvents(prev => {
-      let f = 0;
-      const next = prev.map(e => {
-        if (e.synced === false) { f++; return { ...e, synced: true }; }
-        return e;
-      });
-      return f > 0 ? next : prev;
-    });
-    if (flipped > 0) showToast(`Synced ${flipped} ${flipped === 1 ? 'entry' : 'entries'}`);
-  }, [online]);
+  function addEvent(v) {
+    const record = { ...v, synced: false };
+    setEvents((prev) => [...prev, record].sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+    enqueue({ type: 'event.insert', payload: eventToDB(record, TRIP.id) });
+  }
+
+  function toggleEvent(id) {
+    let updated = null;
+    setEvents((prev) => prev.map((e) => {
+      if (e.id !== id) return e;
+      updated = { ...e, done: !e.done, synced: false };
+      return updated;
+    }));
+    if (updated) enqueue({ type: 'event.update', payload: { id, done: updated.done } });
+  }
 
   const openSettings = () => setOverlay('settings');
   const closeOverlay = () => setOverlay(null);
   const endTrip = () => setOverlay('wrap');
 
-  function resetAll() {
-    if (!confirm('Reset to seed data? All local changes will be lost.')) return;
-    localStorage.removeItem('dp.expenses');
-    localStorage.removeItem('dp.events');
-    setExpenses(SEED_EXPENSES);
-    setEvents(SEED_EVENTS);
-    showToast('Reset to defaults');
+  async function signOut() {
+    await sb.auth.signOut();
+    // Clear all local app state so the next account starts clean.
+    ['dp.expenses', 'dp.events', 'dp.vault', 'dp.pending'].forEach((k) => localStorage.removeItem(k));
+    setExpenses([]); setEvents([]); setVault([]); setPendingOps([]);
+    showToast('Signed out');
+  }
+
+  /* ── RENDER GATES ────────────────────────────────────────────────── */
+  if (authLoading) {
+    return <div className="stage"><div className="phone"><div className="island" /><div className="boot"><div className="boot-dot" /></div></div></div>;
+  }
+  if (!user) {
+    return <div className="stage"><div className="phone"><div className="island" /><LoginScreen /></div></div>;
+  }
+  if (!bootDone) {
+    return <div className="stage"><div className="phone"><div className="island" /><div className="boot"><div className="boot-dot" /></div></div></div>;
   }
 
   return (
@@ -1864,7 +2303,7 @@ function App() {
           {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onOpenPhoto={setPhotoExpense} />}
           {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} />}
           {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} />}
-          {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onReset={resetAll} />}
+          {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} pendingCount={pendingOps.length} userEmail={user.email} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onSignOut={signOut} />}
           {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeOverlay} onToast={showToast} />}
           {!overlay && <BottomNav tab={tab} onTab={setTab} />}
         </div>
