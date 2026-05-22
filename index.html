@@ -594,6 +594,199 @@
   .wrap-hero-amt { font-family: 'Funnel Display'; font-weight: 900; font-size: 56px; letter-spacing: -0.03em; line-height: 1; }
   .wrap-hero-sub { font-size: 13px; font-weight: 600; margin-top: 4px; }
 
+  /* ──────────────── ONBOARDING / TRIP WIZARD ──────────────── */
+  .wiz-stage {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    background: #fffaf0;
+    overflow: hidden;
+  }
+  .wiz-head {
+    background: #0e0e0e; color: #fffaf0;
+    padding: calc(env(safe-area-inset-top) + 14px) 22px 16px;
+    flex-shrink: 0;
+  }
+  .wiz-head-title {
+    font-family: 'Funnel Display'; font-weight: 900;
+    font-size: 22px; letter-spacing: -0.01em;
+    color: #e9c44b;
+  }
+  .wiz-head-sub {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: rgba(255,250,240,0.65);
+    margin-top: 6px;
+  }
+  .wiz-steps {
+    display: flex; gap: 6px; margin-top: 12px;
+  }
+  .wiz-step-dot {
+    flex: 1; height: 4px; background: rgba(255,250,240,0.18); border-radius: 2px;
+    transition: background 0.18s;
+  }
+  .wiz-step-dot.done { background: #e9c44b; }
+  .wiz-step-dot.active { background: #fffaf0; }
+
+  .wiz-body {
+    flex: 1; overflow-y: auto;
+    padding: 24px 22px 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .wiz-prompt {
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-size: 22px; line-height: 1.2; letter-spacing: -0.005em;
+    margin-bottom: 6px;
+  }
+  .wiz-help {
+    font-size: 13px; color: rgba(14,14,14,0.55);
+    line-height: 1.5; margin-bottom: 22px;
+  }
+  .wiz-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: rgba(14,14,14,0.55);
+    margin: 12px 0 6px;
+  }
+  .wiz-input {
+    width: 100%;
+    background: #f1ecdf; border: 2px solid #0e0e0e;
+    border-radius: 4px; padding: 12px 14px;
+    font-size: 16px; font-weight: 500;
+    font-family: inherit; outline: none;
+    box-shadow: 3px 3px 0 #0e0e0e;
+  }
+  .wiz-input:focus { background: #fffaf0; }
+  .wiz-input-sm {
+    background: #f1ecdf; border: 2px solid #0e0e0e;
+    border-radius: 4px; padding: 10px 12px;
+    font-size: 14px; font-weight: 500;
+    font-family: inherit; outline: none;
+  }
+  .wiz-input-sm:focus { background: #fffaf0; }
+
+  .wiz-member-row, .wiz-card-row {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 8px;
+  }
+  .wiz-member-row .wiz-input-sm { flex: 1; }
+  .wiz-initial {
+    width: 44px; height: 44px; flex-shrink: 0;
+    background: #0e0e0e; color: #e9c44b;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 16px;
+    border: 2px solid #0e0e0e; border-radius: 50%;
+    box-shadow: 3px 3px 0 #0e0e0e;
+  }
+  .wiz-remove {
+    background: transparent; border: 2px solid #c0392b;
+    color: #c0392b; border-radius: 4px;
+    width: 36px; height: 36px;
+    font-size: 16px; font-weight: 800;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .wiz-remove:active { background: #c0392b; color: #fffaf0; }
+  .wiz-add {
+    background: transparent; border: 2px dashed #0e0e0e;
+    color: #0e0e0e; border-radius: 4px;
+    padding: 12px; width: 100%;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .wiz-add:active { background: #f1ecdf; }
+
+  .wiz-card-row .owner-select {
+    background: #f1ecdf; border: 2px solid #0e0e0e;
+    border-radius: 4px; padding: 10px 8px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    font-family: inherit;
+    min-width: 90px;
+  }
+
+  .wiz-select-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .wiz-radio {
+    padding: 12px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    background: #fffaf0;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    transition: transform 0.04s, box-shadow 0.04s;
+  }
+  .wiz-radio:active { transform: translate(1px, 1px); }
+  .wiz-radio.active { background: #e9c44b; box-shadow: 3px 3px 0 #0e0e0e; }
+  .wiz-radio .sub {
+    display: block;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.04em;
+    color: rgba(14,14,14,0.55); text-transform: none;
+    margin-top: 4px;
+  }
+
+  .wiz-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .wiz-foot {
+    flex-shrink: 0;
+    padding: 14px 22px max(20px, env(safe-area-inset-bottom));
+    background: #fffaf0;
+    border-top: 2px solid #0e0e0e;
+    display: flex; gap: 10px;
+  }
+  .wiz-btn {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.04s, box-shadow 0.04s;
+  }
+  .wiz-btn.primary {
+    background: #e9c44b; color: #0e0e0e;
+    box-shadow: 4px 4px 0 #0e0e0e;
+  }
+  .wiz-btn.primary:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
+  .wiz-btn.primary:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: 4px 4px 0 rgba(14,14,14,0.2); }
+  .wiz-btn.ghost { background: transparent; color: #0e0e0e; flex: 0 0 auto; padding: 14px 18px; }
+  .wiz-btn.ghost:active { background: #f1ecdf; }
+
+  /* ──────────────── EMPTY STATE ──────────────── */
+  .empty {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 32px;
+    text-align: center;
+    gap: 14px;
+  }
+  .empty-glyph {
+    width: 64px; height: 64px;
+    border: 2px solid #0e0e0e; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; background: #e9c44b;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    margin-bottom: 10px;
+  }
+  .empty-line {
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-size: 17px; line-height: 1.4;
+    max-width: 260px;
+  }
+  .empty-sub {
+    font-size: 12px; color: rgba(14,14,14,0.55);
+    line-height: 1.5; max-width: 260px;
+  }
+  .empty-cta {
+    margin-top: 16px;
+    background: #e9c44b; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 12px 20px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    cursor: pointer;
+  }
+  .empty-cta:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
+
   /* login */
   .login-stage {
     width: 100%; height: 100%;
@@ -1037,6 +1230,495 @@ async function fetchPhotoFromStorage(path) {
 }
 
 /* ════════════════════════════════════════════════════════════════════
+   ONBOARDING / TRIP WIZARD
+   ════════════════════════════════════════════════════════════════════ */
+
+const CURRENCY_OPTIONS = [
+  { code: 'GBP', label: '£ GBP' },
+  { code: 'INR', label: '₹ INR' },
+  { code: 'EUR', label: '€ EUR' },
+  { code: 'USD', label: '$ USD' },
+];
+
+const SPLIT_PRESETS = [
+  { id: 'everyone', label: 'EVERYONE', sub: 'Split equally between all members' },
+  { id: 'just-me',  label: 'JUST PAYER', sub: 'No split, payer covers it' },
+];
+
+function slugify(name) {
+  return name.toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24) || 'member';
+}
+
+function initialFor(name) {
+  const t = name.trim();
+  return (t[0] || '?').toUpperCase();
+}
+
+function uniqueId(existing, base) {
+  let id = base; let n = 2;
+  while (existing.includes(id)) { id = `${base}-${n++}`; }
+  return id;
+}
+
+/* Step 1 of onboarding: family name + members */
+function OnboardingScreen({ familyId, onComplete, onSignOut }) {
+  const [step, setStep] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  // family
+  const [familyName, setFamilyName] = useState('');
+  const [members, setMembers] = useState([
+    { name: '', initial: '' },
+    { name: '', initial: '' },
+  ]);
+
+  // cards (optional)
+  const [cards, setCards] = useState([]);
+
+  // trip
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekOut = new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+  const [tripName, setTripName] = useState('');
+  const [shortName, setShortName] = useState('');
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(weekOut);
+  const [currency, setCurrency] = useState('GBP');
+  const [defaultSplit, setDefaultSplit] = useState('everyone');
+
+  function updateMember(i, patch) {
+    setMembers((prev) => prev.map((m, ix) => ix === i ? { ...m, ...patch } : m));
+  }
+  function addMember() { setMembers((prev) => [...prev, { name: '', initial: '' }]); }
+  function removeMember(i) { setMembers((prev) => prev.filter((_, ix) => ix !== i)); }
+
+  function addCard() {
+    setCards((prev) => [...prev, { ownerName: members[0]?.name || '', nick: '', last4: '' }]);
+  }
+  function updateCard(i, patch) {
+    setCards((prev) => prev.map((c, ix) => ix === i ? { ...c, ...patch } : c));
+  }
+  function removeCard(i) { setCards((prev) => prev.filter((_, ix) => ix !== i)); }
+
+  const validMembers = members
+    .map((m) => ({ ...m, name: m.name.trim() }))
+    .filter((m) => m.name.length > 0);
+  const canContinue1 = familyName.trim().length > 0 && validMembers.length >= 2;
+  const canContinue2 = true; // cards are optional
+  const canFinish = tripName.trim().length > 0 && startDate && endDate && startDate <= endDate;
+
+  async function finish() {
+    if (!canFinish) return;
+    setBusy(true); setErr(null);
+    try {
+      // 1. update family name
+      await sb.from('families').update({ name: familyName.trim() }).eq('id', familyId);
+
+      // 2. insert members with stable slug IDs
+      const memberIds = [];
+      const memberRows = validMembers.map((m, i) => {
+        const id = uniqueId(memberIds, slugify(m.name));
+        memberIds.push(id);
+        return {
+          id, family_id: familyId,
+          name: m.name, initial: m.initial || initialFor(m.name),
+          position: i,
+        };
+      });
+      if (memberRows.length) {
+        const { error: mErr } = await sb.from('family_members').insert(memberRows);
+        if (mErr) throw mErr;
+      }
+
+      // 3. insert cards (lookup owner_member_id by name → id)
+      const memberByName = Object.fromEntries(memberRows.map((m) => [m.name, m.id]));
+      const cardRows = cards
+        .filter((c) => c.nick.trim() && memberByName[c.ownerName])
+        .map((c, i) => ({
+          id: `card-${Date.now()}-${i}`,
+          family_id: familyId,
+          owner_member_id: memberByName[c.ownerName],
+          nick: c.nick.trim(),
+          last4: c.last4.trim() || null,
+          position: i,
+        }));
+      if (cardRows.length) {
+        const { error: cErr } = await sb.from('family_cards').insert(cardRows);
+        if (cErr) throw cErr;
+      }
+
+      // 4. insert trip
+      const { data: tRow, error: tErr } = await sb.from('trips').insert({
+        family_id: familyId,
+        name: tripName.trim(),
+        short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
+        start_date: startDate,
+        end_date: endDate,
+        primary_currency: currency,
+        default_split: defaultSplit,
+      }).select().single();
+      if (tErr) throw tErr;
+
+      onComplete();
+    } catch (e) {
+      setErr(String(e?.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function renderStep1() {
+    return (
+      <>
+        <div className="wiz-prompt">What's your family called?</div>
+        <div className="wiz-help">Just for the trip top-bar. Use whatever feels right — surname, "The Shahs", an inside joke.</div>
+
+        <div className="wiz-label">Family name</div>
+        <input
+          autoFocus
+          className="wiz-input"
+          value={familyName}
+          onChange={(e) => setFamilyName(e.target.value)}
+          placeholder="e.g. The Shahs"
+        />
+
+        <div className="wiz-label" style={{marginTop: 24}}>Family members</div>
+        <div className="wiz-help" style={{marginBottom: 10}}>
+          Anyone who pays for stuff on trips. Two minimum. You can edit later.
+        </div>
+        {members.map((m, i) => (
+          <div key={i} className="wiz-member-row">
+            <div className="wiz-initial">{m.initial || initialFor(m.name) || '?'}</div>
+            <input
+              className="wiz-input-sm"
+              value={m.name}
+              onChange={(e) => updateMember(i, { name: e.target.value, initial: initialFor(e.target.value) })}
+              placeholder={`Member ${i + 1}`}
+            />
+            {members.length > 2 && (
+              <button className="wiz-remove" onClick={() => removeMember(i)} aria-label="remove">×</button>
+            )}
+          </div>
+        ))}
+        <button className="wiz-add" onClick={addMember}>+ ADD MEMBER</button>
+      </>
+    );
+  }
+
+  function renderStep2() {
+    return (
+      <>
+        <div className="wiz-prompt">Payment cards?</div>
+        <div className="wiz-help">
+          Optional. Last 4 digits help you tell "Dad's HDFC" from his Amex when picking who paid. You can skip and add later.
+        </div>
+
+        {cards.length === 0 && (
+          <div style={{padding: '32px 0', textAlign: 'center', color: 'rgba(14,14,14,0.5)', fontSize: 13}}>
+            No cards yet. That's fine — Cash works for everything.
+          </div>
+        )}
+
+        {cards.map((c, i) => (
+          <div key={i} style={{marginBottom: 14, paddingBottom: 14, borderBottom: '1.5px dashed rgba(14,14,14,0.2)'}}>
+            <div className="wiz-card-row">
+              <select
+                className="owner-select"
+                value={c.ownerName}
+                onChange={(e) => updateCard(i, { ownerName: e.target.value })}
+              >
+                <option value="">— OWNER —</option>
+                {validMembers.map((m) => <option key={m.name} value={m.name}>{m.name.toUpperCase()}</option>)}
+              </select>
+              <button className="wiz-remove" onClick={() => removeCard(i)} aria-label="remove">×</button>
+            </div>
+            <div className="wiz-card-row" style={{marginTop: 6}}>
+              <input
+                className="wiz-input-sm"
+                value={c.nick}
+                onChange={(e) => updateCard(i, { nick: e.target.value })}
+                placeholder="Nickname (e.g. HDFC Forex)"
+                style={{flex: 2}}
+              />
+              <input
+                className="wiz-input-sm"
+                value={c.last4}
+                onChange={(e) => updateCard(i, { last4: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                placeholder="Last 4"
+                style={{maxWidth: 80}}
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+        ))}
+
+        <button className="wiz-add" onClick={addCard}>+ ADD CARD</button>
+      </>
+    );
+  }
+
+  function renderStep3() {
+    return (
+      <>
+        <div className="wiz-prompt">Your first trip</div>
+        <div className="wiz-help">
+          Where are you going? Dates can be fuzzy — change them later if plans shift.
+        </div>
+
+        <div className="wiz-label">Trip name</div>
+        <input
+          className="wiz-input"
+          value={tripName}
+          onChange={(e) => setTripName(e.target.value)}
+          placeholder="e.g. London Dec '25"
+        />
+
+        <div className="wiz-label">Short tag (header badge)</div>
+        <input
+          className="wiz-input"
+          value={shortName}
+          onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 16))}
+          placeholder={(tripName.split(/\s+/)[0] || 'LONDON').toUpperCase()}
+        />
+
+        <div className="wiz-label">Dates</div>
+        <div className="wiz-date-row">
+          <input
+            type="date"
+            className="wiz-input"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <input
+            type="date"
+            className="wiz-input"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
+
+        <div className="wiz-label">Primary currency</div>
+        <div className="wiz-select-row">
+          {CURRENCY_OPTIONS.map((c) => (
+            <div
+              key={c.code}
+              className={`wiz-radio ${currency === c.code ? 'active' : ''}`}
+              onClick={() => setCurrency(c.code)}
+            >
+              {c.label}
+            </div>
+          ))}
+        </div>
+
+        <div className="wiz-label">Default split</div>
+        <div className="wiz-select-row">
+          {SPLIT_PRESETS.map((s) => (
+            <div
+              key={s.id}
+              className={`wiz-radio ${defaultSplit === s.id ? 'active' : ''}`}
+              onClick={() => setDefaultSplit(s.id)}
+              style={{gridColumn: 'span 1', padding: '12px 10px'}}
+            >
+              {s.label}
+              <span className="sub">{s.sub}</span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  const stepTitle = step === 1 ? 'Step 1 of 3 · Family' : step === 2 ? 'Step 2 of 3 · Cards' : 'Step 3 of 3 · First trip';
+
+  return (
+    <div className="wiz-stage">
+      <div className="wiz-head">
+        <div className="wiz-head-title">SETUP</div>
+        <div className="wiz-head-sub">{stepTitle}</div>
+        <div className="wiz-steps">
+          <div className={`wiz-step-dot ${step > 1 ? 'done' : step === 1 ? 'active' : ''}`} />
+          <div className={`wiz-step-dot ${step > 2 ? 'done' : step === 2 ? 'active' : ''}`} />
+          <div className={`wiz-step-dot ${step === 3 ? 'active' : ''}`} />
+        </div>
+      </div>
+
+      <div className="wiz-body">
+        {step === 1 && renderStep1()}
+        {step === 2 && renderStep2()}
+        {step === 3 && renderStep3()}
+
+        {err && (
+          <div className="login-err" style={{marginTop: 16}}>{err}</div>
+        )}
+
+        {step === 1 && (
+          <button
+            onClick={onSignOut}
+            style={{
+              marginTop: 32, background: 'transparent', border: 'none',
+              color: 'rgba(14,14,14,0.4)', fontSize: 11, fontWeight: 600,
+              letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+              padding: 12, width: '100%',
+            }}
+          >
+            sign out instead
+          </button>
+        )}
+      </div>
+
+      <div className="wiz-foot">
+        {step > 1 && (
+          <button className="wiz-btn ghost" onClick={() => setStep(step - 1)}>← BACK</button>
+        )}
+        {step < 3 && (
+          <button
+            className="wiz-btn primary"
+            disabled={step === 1 ? !canContinue1 : !canContinue2}
+            onClick={() => setStep(step + 1)}
+          >
+            CONTINUE →
+          </button>
+        )}
+        {step === 3 && (
+          <button
+            className="wiz-btn primary"
+            disabled={!canFinish || busy}
+            onClick={finish}
+          >
+            {busy ? 'SAVING…' : 'FINISH SETUP'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Standalone "new trip" wizard — for when family exists but no active trip. */
+function NoTripScreen({ familyId, members, onComplete, onSignOut }) {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekOut = new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+
+  const [tripName, setTripName] = useState('');
+  const [shortName, setShortName] = useState('');
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(weekOut);
+  const [currency, setCurrency] = useState('GBP');
+  const [defaultSplit, setDefaultSplit] = useState('everyone');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const canFinish = tripName.trim().length > 0 && startDate <= endDate;
+
+  async function finish() {
+    if (!canFinish) return;
+    setBusy(true); setErr(null);
+    try {
+      const { error } = await sb.from('trips').insert({
+        family_id: familyId,
+        name: tripName.trim(),
+        short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
+        start_date: startDate, end_date: endDate,
+        primary_currency: currency, default_split: defaultSplit,
+      });
+      if (error) throw error;
+      onComplete();
+    } catch (e) { setErr(String(e?.message || e)); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="wiz-stage">
+      <div className="wiz-head">
+        <div className="wiz-head-title">DAD PAID</div>
+        <div className="wiz-head-sub">No active trip · let's start one</div>
+      </div>
+      <div className="wiz-body">
+        <div className="wiz-prompt">Start a new trip</div>
+        <div className="wiz-help">
+          Welcome back. You've got {members.length} family member{members.length === 1 ? '' : 's'} set up — just need a trip to start logging.
+        </div>
+
+        <div className="wiz-label">Trip name</div>
+        <input
+          autoFocus
+          className="wiz-input"
+          value={tripName}
+          onChange={(e) => setTripName(e.target.value)}
+          placeholder="e.g. London Dec '25"
+        />
+
+        <div className="wiz-label">Short tag</div>
+        <input
+          className="wiz-input"
+          value={shortName}
+          onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 16))}
+          placeholder={(tripName.split(/\s+/)[0] || 'TRIP').toUpperCase()}
+        />
+
+        <div className="wiz-label">Dates</div>
+        <div className="wiz-date-row">
+          <input type="date" className="wiz-input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <input type="date" className="wiz-input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+
+        <div className="wiz-label">Primary currency</div>
+        <div className="wiz-select-row">
+          {CURRENCY_OPTIONS.map((c) => (
+            <div key={c.code} className={`wiz-radio ${currency === c.code ? 'active' : ''}`} onClick={() => setCurrency(c.code)}>{c.label}</div>
+          ))}
+        </div>
+
+        <div className="wiz-label">Default split</div>
+        <div className="wiz-select-row">
+          {SPLIT_PRESETS.map((s) => (
+            <div key={s.id} className={`wiz-radio ${defaultSplit === s.id ? 'active' : ''}`} onClick={() => setDefaultSplit(s.id)}>
+              {s.label}
+              <span className="sub">{s.sub}</span>
+            </div>
+          ))}
+        </div>
+
+        {err && <div className="login-err" style={{marginTop: 16}}>{err}</div>}
+
+        <button
+          onClick={onSignOut}
+          style={{
+            marginTop: 32, background: 'transparent', border: 'none',
+            color: 'rgba(14,14,14,0.4)', fontSize: 11, fontWeight: 600,
+            letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+            padding: 12, width: '100%',
+          }}
+        >
+          sign out instead
+        </button>
+      </div>
+      <div className="wiz-foot">
+        <button className="wiz-btn primary" disabled={!canFinish || busy} onClick={finish}>
+          {busy ? 'CREATING…' : 'START TRIP →'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* Generic empty state — used inside Ledger/Summary/Tomorrow when no data. */
+function EmptyState({ glyph, line, sub, cta, onCta }) {
+  return (
+    <div className="empty">
+      {glyph && <div className="empty-glyph">{glyph}</div>}
+      <div className="empty-line">{line}</div>
+      {sub && <div className="empty-sub">{sub}</div>}
+      {cta && <button className="empty-cta" onClick={onCta}>{cta}</button>}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
    LOGIN SCREEN
    ════════════════════════════════════════════════════════════════════ */
 
@@ -1103,86 +1785,24 @@ function LoginScreen() {
    SEED DATA
    ════════════════════════════════════════════════════════════════════ */
 
-/* These are mutated by the Supabase loader after sign-in. Kept as `let`
-   so existing components can keep referencing FAMILY.members / TRIP.name
-   without prop-drilling. A version bump in App forces re-renders. */
-let FAMILY = {
-  id: null,
-  members: [
-    { id: 'ami',   name: 'Ami',   initial: 'A' },
-    { id: 'sahil', name: 'Sahil', initial: 'S' },
-    { id: 'ketan', name: 'Ketan', initial: 'K' },
-  ],
-  cards: [
-    { id: 'amex',  owner: 'ami',   nick: 'Amex Plat',  last4: '8832' },
-    { id: 'cash-a',owner: 'ami',   nick: 'Cash',       last4: ''     },
-    { id: 'icici', owner: 'sahil', nick: 'ICICI Deb',  last4: '1234' },
-    { id: 'cash-s',owner: 'sahil', nick: 'Cash',       last4: ''     },
-    { id: 'hdfc',  owner: 'ketan', nick: 'HDFC Forex', last4: '4521' },
-    { id: 'cash-k',owner: 'ketan', nick: 'Cash',       last4: ''     },
-  ],
-};
+/* Mutated by the Supabase loader after sign-in. Starts empty so the app
+   can detect "no family yet" → onboarding wizard. Components reference
+   FAMILY.members / TRIP.name directly; a version bump in App re-renders
+   them after assignment. */
+let FAMILY = { id: null, members: [], cards: [] };
 
 let TRIP = {
   id: null,
-  name: "LONDON DEC '25",
-  shortName: 'LONDON',
-  startDate: '2025-12-15',
-  endDate:   '2025-12-22',
-  totalDays: 8,
-  currentDay: 4,
+  name: '',
+  shortName: '',
+  startDate: '',
+  endDate: '',
+  totalDays: 1,
+  currentDay: 1,
   currencies: ['GBP'],
   defaultSplit: 'everyone',
-  presets: [
-    { label: 'Tube',   amount: 280, currency: 'GBP', category: 'Travel'   },
-    { label: 'Coffee', amount: 400, currency: 'GBP', category: 'Food'     },
-    { label: 'Pub',    amount: 1500,currency: 'GBP', category: 'Food'     },
-  ],
+  presets: [],
 };
-
-// amounts stored in pence/paise (integers). Currency is GBP or INR.
-const SEED_EXPENSES = [
-  // Pre-trip
-  { id: 'e1', date: '2025-10-12', preTrip: true,  payer: 'ketan', card: 'hdfc', amount: 84000,  currency: 'GBP', title: 'The Hoxton Holborn · 6 nights', category: 'Hotel'    },
-  { id: 'e2', date: '2025-11-04', preTrip: true,  payer: 'ketan', card: 'hdfc', amount: 124000, currency: 'GBP', title: 'BA flights · DEL → LHR',         category: 'Travel'   },
-  { id: 'e3', date: '2025-11-22', preTrip: true,  payer: 'ami',   card: 'amex', amount: 18000,  currency: 'GBP', title: 'Travel insurance',               category: 'Other'    },
-
-  // Day 1 — Dec 15
-  { id: 'e4', date: '2025-12-15', payer: 'ketan', card: 'hdfc',  amount: 6800,  currency: 'GBP', title: 'Heathrow Express',  category: 'Travel'      },
-  { id: 'e5', date: '2025-12-15', payer: 'ami',   card: 'amex',  amount: 2900,  currency: 'GBP', title: 'Pret · breakfast',  category: 'Food'        },
-  { id: 'e6', date: '2025-12-15', payer: 'ketan', card: 'hdfc',  amount: 14700, currency: 'GBP', title: 'Dishoom Shoreditch',category: 'Food'        },
-
-  // Day 2 — Dec 16
-  { id: 'e7', date: '2025-12-16', payer: 'ami',   card: 'amex',  amount: 840,   currency: 'GBP', title: 'Tube · day pass',   category: 'Travel'      },
-  { id: 'e8', date: '2025-12-16', payer: 'sahil', card: 'cash-s',amount: 1250,  currency: 'GBP', title: 'British Museum café',category: 'Food'       },
-  { id: 'e9', date: '2025-12-16', payer: 'ami',   card: 'amex',  amount: 4200,  currency: 'GBP', title: 'Borough Market lunch',category: 'Food'      },
-  { id: 'e10',date: '2025-12-16', payer: 'ketan', card: 'hdfc',  amount: 7800,  currency: 'GBP', title: 'Hawksmoor Seven Dials',category: 'Food'     },
-
-  // Day 3 — Dec 17
-  { id: 'e11',date: '2025-12-17', payer: 'ami',   card: 'amex',  amount: 18000, currency: 'GBP', title: 'Liberty London',    category: 'Shopping'    },
-  { id: 'e12',date: '2025-12-17', payer: 'sahil', card: 'icici', amount: 1450,  currency: 'GBP', title: 'Monmouth coffee',   category: 'Food'        },
-  { id: 'e13',date: '2025-12-17', payer: 'ketan', card: 'hdfc',  amount: 9200,  currency: 'GBP', title: 'Brasserie Zédel',   category: 'Food'        },
-  { id: 'e14',date: '2025-12-17', payer: 'ami',   card: 'amex',  amount: 840,   currency: 'GBP', title: 'Tube · day pass',   category: 'Travel'      },
-
-  // Day 4 — Dec 18 (today)
-  { id: 'e15',date: '2025-12-18', payer: 'sahil', card: 'cash-s',amount: 800,   currency: 'GBP', title: 'Pret coffee',       category: 'Food'        },
-  { id: 'e16',date: '2025-12-18', payer: 'ami',   card: 'amex',  amount: 280,   currency: 'GBP', title: 'Tube · single',     category: 'Travel'      },
-  { id: 'e17',date: '2025-12-18', payer: 'ami',   card: 'amex',  amount: 4200,  currency: 'GBP', title: 'Lunch · Padella',   category: 'Food'        },
-];
-
-const SEED_EVENTS = [
-  { id: 'v1', date: '2025-12-19', time: '09:30', title: 'British Museum · timed entry', tag: 'TICKETS IN VAULT', done: false },
-  { id: 'v2', date: '2025-12-19', time: '13:00', title: 'Dishoom Covent Garden',         tag: 'BOOKED #84210',    done: false },
-  { id: 'v3', date: '2025-12-19', time: '15:30', title: 'V&A Museum',                    tag: null,               done: false },
-  { id: 'v4', date: '2025-12-19', time: '19:00', title: 'The Lion King · Lyceum',        tag: 'TICKETS IN VAULT', done: false },
-];
-
-const SEED_VAULT = [
-  { id: 'p1', name: 'The Hoxton confirmation', meta: '218 KB · PDF' },
-  { id: 'p2', name: 'BA boarding passes',      meta: '442 KB · PDF' },
-  { id: 'p3', name: 'Lion King e-tickets',     meta: '186 KB · PDF' },
-  { id: 'p4', name: 'Travel insurance',        meta: '624 KB · PDF' },
-];
 
 const CATEGORIES = ['Food', 'Travel', 'Hotel', 'Shopping', 'Activity', 'Tickets', 'Groceries', 'Other'];
 
@@ -1594,6 +2214,14 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto }) {
           ))}
         </div>
 
+        {expenses.length === 0 && (
+          <EmptyState
+            glyph="🍴"
+            line="First expense will land here."
+            sub="Probably coffee. Tap ADD to log one — it'll show up under TODAY with a fresh-mustard flash."
+          />
+        )}
+
         {/* Pre-trip */}
         {preTrip.length > 0 && (
           <>
@@ -1740,12 +2368,20 @@ function SummaryScreen({ expenses, todayDate, online, onGear }) {
       />
 
       <div className="body">
+        {expenses.length === 0 ? (
+          <EmptyState
+            glyph="📊"
+            line="Numbers appear once money does."
+            sub="Log a few expenses, then come back here — totals, category bars, who-paid-most, and a live settlement preview will fill in."
+          />
+        ) : (
+        <>
         {/* TOTALS */}
         <div className="sum-totals">
           <div className="sum-total primary">
             <div className="lbl">GBP SPEND</div>
             <div className="amt">£{fmtMajor(gbp, 'GBP')}</div>
-            <div className="meta">incl. flights + hotel</div>
+            <div className="meta">{gbp === 0 ? '—' : 'incl. flights + hotel'}</div>
           </div>
           <div className="sum-total">
             <div className="lbl">INR SPEND</div>
@@ -1811,6 +2447,8 @@ function SummaryScreen({ expenses, todayDate, online, onGear }) {
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
           ── settlement locks when trip ends ──
         </div>
+        </>
+        )}
       </div>
     </>
   );
@@ -1940,6 +2578,13 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
           <span>SCHEDULE</span>
           <span>{events.filter(e => e.tag?.includes('BOOKED') || e.tag?.includes('TICKETS')).length} BOOKED</span>
         </div>
+        {events.length === 0 && (
+          <EmptyState
+            glyph="📅"
+            line="Nothing planned yet."
+            sub="The kid's job, usually. Tap + ADD EVENT below to drop in tomorrow's reservations, tickets, meet-up times."
+          />
+        )}
         {events.map(e => (
           <div key={e.id} className="tom-event">
             <div className="tom-event-time">{e.time}</div>
@@ -1982,6 +2627,11 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
           <span>VAULT</span>
           <span>{vault.length} PDFs</span>
         </div>
+        {vault.length === 0 && (
+          <div style={{padding: '18px 22px', fontSize: 12, color: 'rgba(14,14,14,0.55)', textAlign: 'center', fontStyle: 'italic'}}>
+            Hotel confirmations, tickets, insurance PDFs — drop them here later.
+          </div>
+        )}
         {vault.map(v => (
           <div key={v.id} className="tom-vault-item">
             <div style={{flex:1, minWidth:0}}>
@@ -2200,6 +2850,9 @@ function App() {
   const [, bumpVersion] = useState(0);                 // force re-render after FAMILY/TRIP mutate
   const forceRender = () => bumpVersion((v) => v + 1);
 
+  // Bootstrapped from Supabase. Empty members → onboarding. Empty trip → "no trip" screen.
+  const [snapshotState, setSnapshotState] = useState({ family: null, members: [], trip: null });
+
   const [tab, setTab] = useState('add');
   const [overlay, setOverlay] = useState(null);        // null | 'settings' | 'wrap'
   const [photoExpense, setPhotoExpense] = useState(null);
@@ -2221,31 +2874,41 @@ function App() {
   }
 
   /* ── INITIAL LOAD ────────────────────────────────────────────────── */
+  const refreshAll = async () => {
+    try {
+      let snap = await loadAll();
+      // Fallback: if no family row exists (trigger missed or data truncated),
+      // create one from the client. RLS allows the user to insert their own.
+      if (!snap && user) {
+        const defaultName = user.email ? user.email.split('@')[0] : 'New family';
+        const { error: cErr } = await sb.from('families').insert({ name: defaultName, owner_id: user.id });
+        if (!cErr) snap = await loadAll();
+      }
+      if (!snap) { setSnapshotState({ family: null, members: [], trip: null }); return; }
+      setSnapshotState({ family: snap.family, members: snap.members, trip: snap.trip });
+      applyServerSnapshot(snap);
+      setExpenses(snap.expenses.map(expenseFromDB));
+      setEvents(snap.events.map(eventFromDB));
+      setVault(snap.vault.map((v) => ({ id: v.id, name: v.name, meta: v.meta || '' })));
+      if (snap.trip) {
+        const startMs = new Date(snap.trip.start_date).getTime();
+        const todayMs = new Date(todayDate).getTime();
+        const day = Math.max(1, Math.min(TRIP.totalDays, Math.floor((todayMs - startMs) / 86400000) + 1));
+        TRIP.currentDay = day;
+      }
+      forceRender();
+    } catch (e) { console.warn('refresh failed', e); }
+  };
+
   useEffect(() => {
     if (!user || !online) { if (!user) setBootDone(true); return; }
     let alive = true;
     (async () => {
-      try {
-        const snap = await loadAll();
-        if (!alive) return;
-        if (snap) {
-          applyServerSnapshot(snap);
-          setExpenses(snap.expenses.map(expenseFromDB));
-          setEvents(snap.events.map(eventFromDB));
-          setVault(snap.vault.map((v) => ({ id: v.id, name: v.name, meta: v.meta || '' })));
-          // Compute "current day of trip" relative to today.
-          if (snap.trip) {
-            const startMs = new Date(snap.trip.start_date).getTime();
-            const todayMs = new Date(todayDate).getTime();
-            const day = Math.max(1, Math.min(TRIP.totalDays, Math.floor((todayMs - startMs) / 86400000) + 1));
-            TRIP.currentDay = day;
-          }
-          forceRender();
-        }
-      } catch (e) { console.warn('initial load failed', e); }
-      setBootDone(true);
+      await refreshAll();
+      if (alive) setBootDone(true);
     })();
     return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, online]);
 
   /* ── WRITE QUEUE FLUSHER ─────────────────────────────────────────── */
@@ -2384,6 +3047,39 @@ function App() {
   }
   if (!bootDone) {
     return <div className="stage"><div className="phone"><div className="island" /><div className="boot"><div className="boot-dot" /></div></div></div>;
+  }
+
+  // No members yet → onboarding wizard
+  if (snapshotState.family && snapshotState.members.length === 0) {
+    return (
+      <div className="stage">
+        <div className="phone">
+          <div className="island" />
+          <OnboardingScreen
+            familyId={snapshotState.family.id}
+            onComplete={() => refreshAll()}
+            onSignOut={signOut}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Members exist but no active trip → trip creation
+  if (snapshotState.family && snapshotState.members.length > 0 && !snapshotState.trip) {
+    return (
+      <div className="stage">
+        <div className="phone">
+          <div className="island" />
+          <NoTripScreen
+            familyId={snapshotState.family.id}
+            members={snapshotState.members}
+            onComplete={() => refreshAll()}
+            onSignOut={signOut}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
