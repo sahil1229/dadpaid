@@ -1773,8 +1773,9 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
   const canContinue2 = true; // cards are optional
   const canFinish = tripName.trim().length > 0 && startDate && endDate && startDate <= endDate;
 
-  async function finish() {
-    if (!canFinish) return;
+  async function finish(opts = {}) {
+    const skipTrip = !!opts.skipTrip;
+    if (!skipTrip && !canFinish) return;
     setBusy(true); setErr(null);
     try {
       // Idempotency: if a previous submit half-finished (members inserted, trip didn't),
@@ -1823,20 +1824,22 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
         if (cErr) throw cErr;
       }
 
-      // 4. insert trip (skip if family already has an active trip)
-      const { data: existingTrips } = await sb.from('trips')
-        .select('id').eq('family_id', familyId).eq('status', 'active').limit(1);
-      if (!existingTrips || existingTrips.length === 0) {
-        const { error: tErr } = await sb.from('trips').insert({
-          family_id: familyId,
-          name: tripName.trim(),
-          short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
-          start_date: startDate,
-          end_date: endDate,
-          primary_currency: currency,
-          default_split: defaultSplit,
-        });
-        if (tErr) throw tErr;
+      // 4. insert trip (skip entirely if user chose to skip; also skip if family already has an active trip)
+      if (!skipTrip) {
+        const { data: existingTrips } = await sb.from('trips')
+          .select('id').eq('family_id', familyId).eq('status', 'active').limit(1);
+        if (!existingTrips || existingTrips.length === 0) {
+          const { error: tErr } = await sb.from('trips').insert({
+            family_id: familyId,
+            name: tripName.trim(),
+            short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
+            start_date: startDate,
+            end_date: endDate,
+            primary_currency: currency,
+            default_split: defaultSplit,
+          });
+          if (tErr) throw tErr;
+        }
       }
 
       onComplete();
@@ -2060,13 +2063,23 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
           </button>
         )}
         {step === 3 && (
-          <button
-            className="wiz-btn primary"
-            disabled={!canFinish || busy}
-            onClick={finish}
-          >
-            {busy ? 'SAVING…' : 'FINISH SETUP'}
-          </button>
+          <>
+            <button
+              className="wiz-btn ghost"
+              disabled={busy}
+              onClick={() => finish({ skipTrip: true })}
+              style={{flex: 1}}
+            >
+              SKIP, ADD LATER
+            </button>
+            <button
+              className="wiz-btn primary"
+              disabled={!canFinish || busy}
+              onClick={() => finish()}
+            >
+              {busy ? 'SAVING…' : 'FINISH'}
+            </button>
+          </>
         )}
       </div>
     </div>
