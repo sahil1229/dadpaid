@@ -1768,6 +1768,7 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const submitLock = useRef(false);  // synchronous re-entry guard (state-based `busy` is too slow against rapid taps)
 
   // self (single user — one email per person now)
   const defaultName = userEmail ? userEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
@@ -1802,21 +1803,29 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
 
   async function finish(opts = {}) {
     const skipTrip = !!opts.skipTrip;
+    if (submitLock.current) return;
     if (!skipTrip && !canFinish) return;
+    submitLock.current = true;
     setBusy(true); setErr(null);
     try {
-      // Idempotency check
-      const { data: existingMembers } = await sb.from('family_members')
-        .select('id, name').eq('family_id', familyId);
-      const hasMembers = (existingMembers || []).length > 0;
+      if (!familyId) throw new Error('Family not loaded. Sign out and back in.');
 
       // 1. update family name to user's name (used as the hub tagline)
-      await sb.from('families').update({ name: myName.trim() }).eq('id', familyId);
+      const { error: fErr } = await sb.from('families').update({ name: myName.trim() }).eq('id', familyId);
+      if (fErr) throw new Error('family update failed: ' + fErr.message);
 
-      // 2. insert ME as the single family member
+      // 2. ensure exactly one member (the user). Re-use if any already exists.
+      const { data: existingMembers, error: emErr } = await sb.from('family_members')
+        .select('id').eq('family_id', familyId);
+      if (emErr) throw new Error('members lookup failed: ' + emErr.message);
+
       let myMemberId;
-      if (hasMembers) {
+      if (existingMembers && existingMembers.length > 0) {
         myMemberId = existingMembers[0].id;
+        // also bring color/name in line with what the user typed this round
+        await sb.from('family_members').update({
+          name: myName.trim(), initial: initialFor(myName), color: myColor,
+        }).eq('id', myMemberId);
       } else {
         myMemberId = uid('mem');
         const { error: mErr } = await sb.from('family_members').insert([{
@@ -1827,10 +1836,10 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
           color: myColor,
           position: 0,
         }]);
-        if (mErr) throw mErr;
+        if (mErr) throw new Error('member insert failed: ' + mErr.message);
       }
 
-      // 3. insert my cards
+      // 3. insert any new cards (dedupe by nick)
       const { data: existingCards } = await sb.from('family_cards')
         .select('nick').eq('family_id', familyId);
       const existingCardNicks = new Set((existingCards || []).map((c) => c.nick));
@@ -1846,10 +1855,10 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
         }));
       if (cardRows.length) {
         const { error: cErr } = await sb.from('family_cards').insert(cardRows);
-        if (cErr) throw cErr;
+        if (cErr) throw new Error('card insert failed: ' + cErr.message);
       }
 
-      // 4. insert trip (skip entirely if user chose to skip; also skip if family already has an active trip)
+      // 4. insert trip — unless skipping, or family already has an active trip
       if (!skipTrip) {
         const { data: existingTrips } = await sb.from('trips')
           .select('id').eq('family_id', familyId).eq('status', 'active').limit(1);
@@ -1863,14 +1872,16 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
             primary_currency: currency,
             default_split: defaultSplit,
           });
-          if (tErr) throw tErr;
+          if (tErr) throw new Error('trip insert failed: ' + tErr.message);
         }
       }
 
       onComplete();
     } catch (e) {
+      console.error('onboarding finish failed', e);
       setErr(String(e?.message || e));
     } finally {
+      submitLock.current = false;
       setBusy(false);
     }
   }
