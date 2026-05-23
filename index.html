@@ -4411,9 +4411,14 @@ function App() {
     showToast(m.id ? 'Member updated' : 'Member added');
   }
   async function deleteMemberLocal(m) {
-    if (FAMILY.members.length <= 2) { showToast('Need at least 2 members'); return; }
+    if (FAMILY.members.length <= 1) { showToast('Need at least 1 member'); return; }
+    const expensesForMember = expenses.filter((e) => e.payer === m.id).length;
+    if (expensesForMember > 0) {
+      const ok = confirm(`Remove ${m.name}? Their ${expensesForMember} expense${expensesForMember === 1 ? '' : 's'} on this trip will be deleted too.`);
+      if (!ok) return;
+    }
     const { error } = await sb.from('family_members').delete().eq('id', m.id);
-    if (error) { showToast('Remove failed. They may have expenses.'); return; }
+    if (error) { showToast('Remove failed.'); return; }
     await refreshAll();
     setEditMember(null);
     showToast('Member removed');
