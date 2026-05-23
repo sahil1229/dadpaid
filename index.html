@@ -1227,6 +1227,57 @@
     50% { transform: scale(0.7); }
   }
 
+  /* invite modal */
+  .invite-modal {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #fffaf0;
+    border-top: 2px solid #0e0e0e;
+    z-index: 110;
+    animation: slideUp 0.26s cubic-bezier(0.2, 0.7, 0.3, 1);
+    padding: 24px 22px max(24px, env(safe-area-inset-bottom));
+  }
+  .invite-title {
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 20px;
+    letter-spacing: 0.02em; margin-bottom: 6px;
+  }
+  .invite-sub {
+    font-size: 12px; color: rgba(14,14,14,0.6);
+    line-height: 1.5; margin-bottom: 16px;
+  }
+  .invite-url-box {
+    background: #f1ecdf; border: 2px solid #0e0e0e;
+    padding: 12px 14px;
+    font-family: 'IBM Plex Mono'; font-weight: 500; font-size: 12px;
+    word-break: break-all;
+    margin-bottom: 14px;
+    color: #0e0e0e;
+    box-shadow: 3px 3px 0 #0e0e0e;
+  }
+  .invite-btn-row { display: flex; gap: 10px; }
+  .invite-btn {
+    flex: 1; padding: 13px 16px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: transform 0.04s, box-shadow 0.04s;
+  }
+  .invite-btn.primary { background: #e9c44b; color: #0e0e0e; box-shadow: 4px 4px 0 #0e0e0e; }
+  .invite-btn.primary:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
+  .invite-btn.ghost { background: transparent; }
+  .invite-btn.ghost:active { background: #f1ecdf; }
+  .invite-meta {
+    margin-top: 16px; font-size: 11px; color: rgba(14,14,14,0.5);
+    text-align: center; letter-spacing: 0.04em;
+  }
+
+  /* joined trip badge */
+  .joined-badge {
+    background: #5da9e6; color: #0e0e0e;
+    padding: 2px 7px; border: 1.5px solid #0e0e0e;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.14em;
+    border-radius: 2px;
+  }
+
   /* photo lightbox */
   .lightbox {
     position: absolute; inset: 0; z-index: 200;
@@ -1511,25 +1562,89 @@ function eventToDB(v, tripId) {
 
 /* Loader: pulls family/members/cards/active trip/expenses/events/vault. */
 async function loadAll() {
-  const { data: fams, error: fErr } = await sb.from('families').select('*').limit(1);
-  if (fErr || !fams?.length) return null;
-  const fam = fams[0];
-  const [{ data: members }, { data: cards }, { data: trips }] = await Promise.all([
-    sb.from('family_members').select('*').eq('family_id', fam.id).order('position'),
-    sb.from('family_cards').select('*').eq('family_id', fam.id).order('position'),
-    sb.from('trips').select('*').eq('family_id', fam.id).order('start_date', { ascending: false }),
-  ]);
-  const activeTrip = (trips || []).find((t) => t.status === 'active') || null;
-  const pastTrips = (trips || []).filter((t) => t.status === 'ended');
-  if (!activeTrip) {
-    return { family: fam, members: members || [], cards: cards || [], trip: null, pastTrips, expenses: [], events: [], vault: [] };
+  // 1. The user's own family (the one they own). May be null for pure-guest users.
+  const { data: fams } = await sb.from('families').select('*').limit(1);
+  const userFamily = fams?.[0] || null;
+
+  // 2. All trips visible to me. RLS includes both owned families and trips I'm a participant in.
+  const { data: allTrips } = await sb.from('trips').select('*').order('start_date', { ascending: false });
+  const trips = allTrips || [];
+
+  // 3. Active trip: prefer my own active, else any active I can see (only one expected at a time).
+  let active = trips.find((t) => t.status === 'active' && userFamily && t.family_id === userFamily.id) || null;
+  if (!active) active = trips.find((t) => t.status === 'active') || null;
+
+  if (!active) {
+    return {
+      family: userFamily, userFamily,
+      members: [], cards: [],
+      trip: null, pastTrips: trips.filter((t) => t.status === 'ended'),
+      expenses: [], events: [], vault: [],
+      participants: [],
+    };
   }
-  const [{ data: exps }, { data: evs }, { data: vlt }] = await Promise.all([
-    sb.from('expenses').select('*').eq('trip_id', activeTrip.id).order('date', { ascending: false }),
-    sb.from('events').select('*').eq('trip_id', activeTrip.id).order('time'),
-    sb.from('vault_items').select('*').eq('trip_id', activeTrip.id),
+
+  // 4. The family that OWNS the active trip (may not be `userFamily` for guest joins).
+  const { data: tfams } = await sb.from('families').select('*').eq('id', active.family_id).limit(1);
+  const tripFamily = tfams?.[0] || userFamily;
+
+  // 5. Members + cards for the trip family.
+  const [{ data: members }, { data: cards }, { data: exps }, { data: evs }, { data: vlt }, { data: parts }] = await Promise.all([
+    sb.from('family_members').select('*').eq('family_id', active.family_id).order('position'),
+    sb.from('family_cards').select('*').eq('family_id', active.family_id).order('position'),
+    sb.from('expenses').select('*').eq('trip_id', active.id).order('date', { ascending: false }),
+    sb.from('events').select('*').eq('trip_id', active.id).order('time'),
+    sb.from('vault_items').select('*').eq('trip_id', active.id),
+    sb.from('trip_participants').select('user_id, member_id, role').eq('trip_id', active.id),
   ]);
-  return { family: fam, members: members || [], cards: cards || [], trip: activeTrip, pastTrips, expenses: exps || [], events: evs || [], vault: vlt || [] };
+
+  return {
+    family: tripFamily, userFamily,
+    members: members || [], cards: cards || [],
+    trip: active, pastTrips: trips.filter((t) => t.status === 'ended'),
+    expenses: exps || [], events: evs || [], vault: vlt || [],
+    participants: parts || [],
+  };
+}
+
+/* On boot: capture invite codes from URL into localStorage, then clean the URL.
+   Acceptance happens after auth + onboarding (see App.useEffect). */
+(function captureInviteCode() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('invite');
+    if (code) {
+      localStorage.setItem('dp.pending_invite', code);
+      params.delete('invite');
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+      window.history.replaceState({}, '', newUrl);
+    }
+  } catch (e) { /* ignore */ }
+})();
+
+async function acceptPendingInvite() {
+  const code = localStorage.getItem('dp.pending_invite');
+  if (!code) return null;
+  try {
+    const { data, error } = await sb.rpc('accept_invite', { p_code: code });
+    localStorage.removeItem('dp.pending_invite');
+    if (error) return { error: error.message };
+    return data || null;
+  } catch (e) {
+    localStorage.removeItem('dp.pending_invite');
+    return { error: String(e?.message || e) };
+  }
+}
+
+async function createInviteForTrip(tripId) {
+  const { data, error } = await sb.rpc('create_invite', { p_trip_id: tripId });
+  if (error) throw error;
+  return data; // the code string
+}
+
+function inviteUrl(code) {
+  return `${window.location.origin}${window.location.pathname}?invite=${code}`;
 }
 
 /* Mutate FAMILY/TRIP module-level vars from Supabase shape. */
@@ -3205,7 +3320,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
    SETTINGS
    ════════════════════════════════════════════════════════════════════ */
 
-function SettingsScreen({ expenses, online, pendingCount, userEmail, onBack, onEndTrip, onToast, onSignOut, onEditMember, onEditCard }) {
+function SettingsScreen({ expenses, online, pendingCount, userEmail, participants, isOwner, onBack, onEndTrip, onToast, onSignOut, onEditMember, onEditCard, onInvite }) {
   function exportCSV() {
     const headers = ['date','payer','card','amount','currency','title','category','split','preTrip'];
     const rows = expenses.map(e => [
@@ -3308,11 +3423,42 @@ function SettingsScreen({ expenses, online, pendingCount, userEmail, onBack, onE
           <span>EXPORT AS CSV</span>
         </div>
 
-        <div className="section-band-dark"><span>TRIP ACTIONS</span></div>
-        <div className="settings-action danger" onClick={onEndTrip}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-          <span>END TRIP · COMPUTE SETTLEMENT</span>
+        <div className="section-band-dark">
+          <span>PARTICIPANTS</span>
+          <span>{(participants?.length || 0) + (isOwner ? 1 : 0)} TOTAL</span>
         </div>
+        {isOwner && (
+          <div className="settings-row" style={{cursor: 'default'}}>
+            <div style={{flex: 1, fontSize: 14, fontWeight: 600}}>You (trip owner)</div>
+            <div style={{fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(14,14,14,0.4)'}}>OWNER</div>
+          </div>
+        )}
+        {(participants || []).map((p) => (
+          <div key={p.user_id} className="settings-row" style={{cursor: 'default'}}>
+            <div style={{flex: 1, fontSize: 14, fontWeight: 600}}>
+              {memberOf(p.member_id)?.name || 'Guest'}
+            </div>
+            <div style={{fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#5da9e6'}}>GUEST</div>
+          </div>
+        ))}
+        {isOwner && (
+          <div className="settings-action" onClick={onInvite}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            <span>INVITE SOMEONE TO THIS TRIP</span>
+          </div>
+        )}
+
+        <div className="section-band-dark"><span>TRIP ACTIONS</span></div>
+        {isOwner ? (
+          <div className="settings-action danger" onClick={onEndTrip}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            <span>END TRIP · COMPUTE SETTLEMENT</span>
+          </div>
+        ) : (
+          <div className="settings-row" style={{cursor: 'default', color: 'rgba(14,14,14,0.5)', fontStyle: 'italic'}}>
+            <span style={{flex: 1, fontSize: 13}}>Only the trip owner can end the trip.</span>
+          </div>
+        )}
         <div className="settings-action danger" onClick={onSignOut}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span>SIGN OUT</span>
@@ -3399,6 +3545,47 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
         <div style={{padding: '8px 22px 32px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
           on every trip, dad paid
         </div>
+      </div>
+    </>
+  );
+}
+
+function InviteModal({ url, tripName, onClose, onToast }) {
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      onToast('Link copied');
+    } catch { onToast('Copy failed'); }
+  }
+  async function share() {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Dad Paid: ${tripName}`,
+          text: `Hop on this trip with me. Tap the link to join.`,
+          url,
+        });
+      } catch { /* user cancelled */ }
+    } else {
+      copy();
+    }
+  }
+  return (
+    <>
+      <div className="backdrop" onClick={onClose} />
+      <div className="invite-modal">
+        <div className="invite-title">SHARE WITH GUEST</div>
+        <div className="invite-sub">
+          Send this link to anyone you want on <strong>{tripName}</strong>. They'll sign in with their own email, then see this trip in their app. Expires in 14 days.
+        </div>
+        <div className="invite-url-box">{url}</div>
+        <div className="invite-btn-row">
+          <button className="invite-btn ghost" onClick={onClose}>CLOSE</button>
+          <button className="invite-btn primary" onClick={navigator.share ? share : copy}>
+            {navigator.share ? 'SHARE ›' : 'COPY ›'}
+          </button>
+        </div>
+        <div className="invite-meta">they'll see all expenses, events, and the settlement</div>
       </div>
     </>
   );
@@ -3754,7 +3941,8 @@ function formatDateShort(iso) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).toLowerCase();
 }
 
-function HubScreen({ family, activeTrip, pastTrips, expenses, online, onOpenTrip, onNewTrip, onSignOut }) {
+function HubScreen({ family, userFamily, activeTrip, pastTrips, expenses, online, onOpenTrip, onNewTrip, onSignOut }) {
+  const isJoinedTrip = (t) => !!t && (!userFamily || t.family_id !== userFamily.id);
   const greeting = pickGreeting();
 
   const activeTotal = activeTrip
@@ -3781,7 +3969,10 @@ function HubScreen({ family, activeTrip, pastTrips, expenses, online, onOpenTrip
 
         {activeTrip && (
           <div className="hub-active">
-            <div className="hub-active-tag">currently in</div>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <div className="hub-active-tag">currently in</div>
+              {isJoinedTrip(activeTrip) && <span className="joined-badge">JOINED</span>}
+            </div>
             <div className="hub-active-name">{activeTrip.name}</div>
             <div className="hub-active-meta">
               day {activeCurrent} of {activeDays} · {symbol(activeTrip.primary_currency || 'GBP')}{fmtMajor(activeTotal, activeTrip.primary_currency || 'GBP')} so far
@@ -3808,7 +3999,10 @@ function HubScreen({ family, activeTrip, pastTrips, expenses, online, onOpenTrip
                     {formatDateShort(t.start_date)} to {formatDateShort(t.end_date)} · {t.primary_currency}
                   </div>
                 </div>
-                <div className="badge">ended</div>
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4}}>
+                  {isJoinedTrip(t) && <span className="joined-badge">JOINED</span>}
+                  <div className="badge">ended</div>
+                </div>
               </div>
             ))}
           </>
@@ -3839,7 +4033,8 @@ function App() {
   const forceRender = () => bumpVersion((v) => v + 1);
 
   // Bootstrapped from Supabase. Empty members → onboarding. Empty trip → "no trip" screen.
-  const [snapshotState, setSnapshotState] = useState({ family: null, members: [], trip: null, pastTrips: [] });
+  const [snapshotState, setSnapshotState] = useState({ family: null, userFamily: null, members: [], trip: null, pastTrips: [], participants: [] });
+  const [inviteModal, setInviteModal] = useState(null); // { code, url, tripName } when generating
   const [a2hsSeen, setA2hsSeen] = usePersistedState('dp.a2hs.seen', false);
   const [showA2hs, setShowA2hs] = useState(false);
 
@@ -3879,8 +4074,15 @@ function App() {
         const { error: cErr } = await sb.from('families').insert({ name: defaultName, owner_id: user.id });
         if (!cErr) snap = await loadAll();
       }
-      if (!snap) { setSnapshotState({ family: null, members: [], trip: null, pastTrips: [] }); return; }
-      setSnapshotState({ family: snap.family, members: snap.members, trip: snap.trip, pastTrips: snap.pastTrips || [] });
+      if (!snap) { setSnapshotState({ family: null, userFamily: null, members: [], trip: null, pastTrips: [], participants: [] }); return; }
+      setSnapshotState({
+        family: snap.family,
+        userFamily: snap.userFamily,
+        members: snap.members,
+        trip: snap.trip,
+        pastTrips: snap.pastTrips || [],
+        participants: snap.participants || [],
+      });
       applyServerSnapshot(snap);
       setExpenses(snap.expenses.map(expenseFromDB));
       setEvents(snap.events.map(eventFromDB));
@@ -3899,6 +4101,16 @@ function App() {
     if (!user || !online) { if (!user) setBootDone(true); return; }
     let alive = true;
     (async () => {
+      // First, accept any pending invite captured from the URL. This must happen
+      // BEFORE the snapshot load so the user's first refreshAll sees the new trip.
+      const result = await acceptPendingInvite();
+      if (alive && result) {
+        if (result.error) {
+          showToast(result.error);
+        } else if (result.ok && !result.already && !result.self) {
+          showToast('Joined trip');
+        }
+      }
       await refreshAll();
       if (alive) setBootDone(true);
     })();
@@ -4119,6 +4331,16 @@ function App() {
   const openSettings = () => setOverlay('settings');
   const closeOverlay = () => setOverlay(null);
 
+  async function generateInvite() {
+    if (!TRIP.id) return;
+    try {
+      const code = await createInviteForTrip(TRIP.id);
+      setInviteModal({ code, url: inviteUrl(code), tripName: TRIP.name });
+    } catch (e) {
+      showToast(e?.message || 'Could not create invite');
+    }
+  }
+
   async function endTrip() {
     if (!confirm('End this trip? You can start a new one right after. Past trip stays in your archive.')) return;
     try {
@@ -4197,6 +4419,7 @@ function App() {
           <div className="island" />
           <HubScreen
             family={snapshotState.family}
+            userFamily={snapshotState.userFamily}
             activeTrip={snapshotState.trip}
             pastTrips={snapshotState.pastTrips}
             expenses={expenses}
@@ -4246,13 +4469,28 @@ function App() {
           {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} />}
           {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} />}
           {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onHome={() => setView('hub')} onEditEvent={setEditEvent} />}
-          {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} pendingCount={pendingOps.length} userEmail={user.email} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onSignOut={signOut} onEditMember={setEditMember} onEditCard={setEditCard} />}
+          {overlay === 'settings' && <SettingsScreen
+            expenses={expenses}
+            online={online}
+            pendingCount={pendingOps.length}
+            userEmail={user.email}
+            participants={snapshotState.participants}
+            isOwner={!!snapshotState.userFamily && snapshotState.family && snapshotState.userFamily.id === snapshotState.family.id}
+            onBack={closeOverlay}
+            onEndTrip={endTrip}
+            onToast={showToast}
+            onSignOut={signOut}
+            onEditMember={setEditMember}
+            onEditCard={setEditCard}
+            onInvite={generateInvite}
+          />}
           {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeWrap} onToast={showToast} />}
           {!overlay && <BottomNav tab={tab} onTab={setTab} />}
         </div>
         <div className="home-bar" />
         {toast && <div className="toast">{toast}</div>}
         {photoExpense && <PhotoLightbox expense={photoExpense} onClose={() => setPhotoExpense(null)} />}
+        {inviteModal && <InviteModal url={inviteModal.url} tripName={inviteModal.tripName} onClose={() => setInviteModal(null)} onToast={showToast} />}
         {editExpense && <EditExpenseSheet expense={editExpense} onSave={updateExpense} onDelete={deleteExpense} onClose={() => setEditExpense(null)} />}
         {editEvent && <EditEventSheet event={editEvent} onSave={updateEvent} onDelete={deleteEventLocal} onClose={() => setEditEvent(null)} />}
         {editMember !== null && <EditMemberSheet member={editMember.id ? editMember : null} allowDelete={FAMILY.members.length > 2} onSave={saveMember} onDelete={deleteMemberLocal} onClose={() => setEditMember(null)} />}
