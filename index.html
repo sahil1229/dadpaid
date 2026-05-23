@@ -757,6 +757,106 @@
   .wiz-btn.ghost { background: transparent; color: #0e0e0e; flex: 0 0 auto; padding: 14px 18px; }
   .wiz-btn.ghost:active { background: #f1ecdf; }
 
+  /* ──────────────── ADD-TO-HOME-SCREEN ──────────────── */
+  .a2hs-stage {
+    width: 100%; height: 100%;
+    background: #fffaf0;
+    display: flex; flex-direction: column;
+  }
+  .a2hs-head {
+    background: #0e0e0e; color: #fffaf0;
+    padding: calc(env(safe-area-inset-top) + 14px) 22px 16px;
+    flex-shrink: 0;
+  }
+  .a2hs-icon-wrap {
+    text-align: center; padding: 24px 22px 16px;
+  }
+  .a2hs-icon {
+    width: 88px; height: 88px;
+    border: 2px solid #0e0e0e;
+    box-shadow: 6px 6px 0 #0e0e0e;
+    margin: 0 auto;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fffaf0;
+  }
+  .a2hs-icon img { width: 80%; height: 80%; object-fit: contain; border-radius: 14px; }
+  .a2hs-body {
+    flex: 1; overflow-y: auto;
+    padding: 0 22px 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .a2hs-prompt {
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-size: 22px; line-height: 1.25; letter-spacing: -0.005em;
+    text-align: center;
+    margin: 6px 0 10px;
+  }
+  .a2hs-help {
+    font-size: 13px; color: rgba(14,14,14,0.6);
+    line-height: 1.5; text-align: center;
+    margin-bottom: 22px;
+  }
+  .a2hs-step {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 12px 14px; margin-bottom: 8px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    background: #fffaf0;
+  }
+  .a2hs-step-num {
+    width: 28px; height: 28px;
+    background: #e9c44b; border: 2px solid #0e0e0e; border-radius: 50%;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .a2hs-step-body { font-size: 13px; line-height: 1.45; }
+  .a2hs-step-glyph {
+    margin-left: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; vertical-align: -5px;
+  }
+  .a2hs-foot {
+    flex-shrink: 0;
+    padding: 14px 22px max(20px, env(safe-area-inset-bottom));
+    background: #fffaf0;
+    border-top: 2px solid #0e0e0e;
+    display: flex; gap: 10px;
+  }
+  .a2hs-foot .skip {
+    flex: 1;
+    background: transparent; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 14px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .a2hs-foot .skip:active { background: #f1ecdf; }
+  .a2hs-foot .primary {
+    flex: 1;
+    background: #e9c44b; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 14px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 13px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    cursor: pointer;
+  }
+  .a2hs-foot .primary:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 #0e0e0e; }
+
+  /* past trips list */
+  .past-trip {
+    padding: 14px 18px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    background: #fffaf0;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .past-trip .nm { font-family: 'Funnel Display'; font-weight: 800; font-size: 14px; }
+  .past-trip .dt { font-size: 11px; color: rgba(14,14,14,0.55); margin-top: 2px; letter-spacing: 0.04em; }
+  .past-trip-empty { font-size: 12px; color: rgba(14,14,14,0.5); text-align: center; padding: 8px 0; font-style: italic; }
+
   /* ──────────────── EDIT SHEET (full-screen) ──────────────── */
   .edit-sheet {
     position: absolute; inset: 0; z-index: 80;
@@ -1275,16 +1375,19 @@ async function loadAll() {
   const [{ data: members }, { data: cards }, { data: trips }] = await Promise.all([
     sb.from('family_members').select('*').eq('family_id', fam.id).order('position'),
     sb.from('family_cards').select('*').eq('family_id', fam.id).order('position'),
-    sb.from('trips').select('*').eq('family_id', fam.id).eq('status', 'active').order('start_date', { ascending: false }).limit(1),
+    sb.from('trips').select('*').eq('family_id', fam.id).order('start_date', { ascending: false }),
   ]);
-  if (!trips?.length) return { family: fam, members: members || [], cards: cards || [], trip: null, expenses: [], events: [], vault: [] };
-  const trip = trips[0];
+  const activeTrip = (trips || []).find((t) => t.status === 'active') || null;
+  const pastTrips = (trips || []).filter((t) => t.status === 'ended');
+  if (!activeTrip) {
+    return { family: fam, members: members || [], cards: cards || [], trip: null, pastTrips, expenses: [], events: [], vault: [] };
+  }
   const [{ data: exps }, { data: evs }, { data: vlt }] = await Promise.all([
-    sb.from('expenses').select('*').eq('trip_id', trip.id).order('date', { ascending: false }),
-    sb.from('events').select('*').eq('trip_id', trip.id).order('time'),
-    sb.from('vault_items').select('*').eq('trip_id', trip.id),
+    sb.from('expenses').select('*').eq('trip_id', activeTrip.id).order('date', { ascending: false }),
+    sb.from('events').select('*').eq('trip_id', activeTrip.id).order('time'),
+    sb.from('vault_items').select('*').eq('trip_id', activeTrip.id),
   ]);
-  return { family: fam, members: members || [], cards: cards || [], trip, expenses: exps || [], events: evs || [], vault: vlt || [] };
+  return { family: fam, members: members || [], cards: cards || [], trip: activeTrip, pastTrips, expenses: exps || [], events: evs || [], vault: vlt || [] };
 }
 
 /* Mutate FAMILY/TRIP module-level vars from Supabase shape. */
@@ -1714,7 +1817,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
 }
 
 /* Standalone "new trip" wizard — for when family exists but no active trip. */
-function NoTripScreen({ familyId, members, onComplete, onSignOut }) {
+function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut }) {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const weekOut = new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10);
@@ -1801,6 +1904,21 @@ function NoTripScreen({ familyId, members, onComplete, onSignOut }) {
 
         {err && <div className="login-err" style={{marginTop: 16}}>{err}</div>}
 
+        {pastTrips.length > 0 && (
+          <>
+            <div className="wiz-label" style={{marginTop: 32}}>Past trips · {pastTrips.length}</div>
+            {pastTrips.slice(0, 6).map((t) => (
+              <div key={t.id} className="past-trip">
+                <div>
+                  <div className="nm">{t.name}</div>
+                  <div className="dt">{t.start_date} → {t.end_date} · {t.primary_currency}</div>
+                </div>
+                <div style={{fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(14,14,14,0.4)'}}>ENDED</div>
+              </div>
+            ))}
+          </>
+        )}
+
         <button
           onClick={onSignOut}
           style={{
@@ -1817,6 +1935,149 @@ function NoTripScreen({ familyId, members, onComplete, onSignOut }) {
         <button className="wiz-btn primary" disabled={!canFinish || busy} onClick={finish}>
           {busy ? 'CREATING…' : 'START TRIP →'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* Platform detection for "Add to Home Screen" guidance. */
+function detectPlatform() {
+  if (typeof window === 'undefined') return 'unknown';
+  const isStandalone =
+    window.matchMedia?.('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+  if (isStandalone) return 'installed';
+  const ua = navigator.userAgent || '';
+  if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'desktop';
+}
+
+let deferredInstallPrompt = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+}
+
+function AddToHomeScreen({ onDone }) {
+  const platform = detectPlatform();
+  const [busy, setBusy] = useState(false);
+
+  async function nativeInstall() {
+    if (!deferredInstallPrompt) return;
+    setBusy(true);
+    try {
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      onDone();
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="a2hs-stage">
+      <div className="a2hs-head">
+        <div className="wiz-head-title">ALMOST DONE</div>
+        <div className="wiz-head-sub">One last optional thing</div>
+      </div>
+
+      <div className="a2hs-icon-wrap">
+        <div className="a2hs-icon"><img src="apple-touch-icon.png" alt="Dad Paid icon" /></div>
+      </div>
+
+      <div className="a2hs-body">
+        <div className="a2hs-prompt">Add Dad Paid to your Home Screen</div>
+        <div className="a2hs-help">
+          Opens like a native app — no URL bar, full screen, faster load.
+          Works fully offline once installed. Optional.
+        </div>
+
+        {platform === 'ios' && (
+          <>
+            <div className="a2hs-step">
+              <div className="a2hs-step-num">1</div>
+              <div className="a2hs-step-body">
+                Tap the <strong>Share</strong> button at the bottom of Safari
+                <span className="a2hs-step-glyph">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div className="a2hs-step">
+              <div className="a2hs-step-num">2</div>
+              <div className="a2hs-step-body">Scroll and tap <strong>Add to Home Screen</strong></div>
+            </div>
+            <div className="a2hs-step">
+              <div className="a2hs-step-num">3</div>
+              <div className="a2hs-step-body">Tap <strong>Add</strong> in the top-right</div>
+            </div>
+            <div className="a2hs-step">
+              <div className="a2hs-step-num">4</div>
+              <div className="a2hs-step-body">Open Dad Paid from your home screen — done</div>
+            </div>
+          </>
+        )}
+
+        {platform === 'android' && (
+          deferredInstallPrompt ? (
+            <div className="a2hs-step" style={{justifyContent: 'center'}}>
+              <div className="a2hs-step-body" style={{textAlign: 'center', flex: 1}}>
+                Tap <strong>Install</strong> below — Chrome will show its install prompt.
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="a2hs-step">
+                <div className="a2hs-step-num">1</div>
+                <div className="a2hs-step-body">Tap the menu <strong>⋮</strong> in the top-right of Chrome</div>
+              </div>
+              <div className="a2hs-step">
+                <div className="a2hs-step-num">2</div>
+                <div className="a2hs-step-body">Tap <strong>Install app</strong> (or <strong>Add to Home screen</strong>)</div>
+              </div>
+              <div className="a2hs-step">
+                <div className="a2hs-step-num">3</div>
+                <div className="a2hs-step-body">Confirm <strong>Install</strong></div>
+              </div>
+            </>
+          )
+        )}
+
+        {platform === 'desktop' && (
+          <>
+            <div className="a2hs-step">
+              <div className="a2hs-step-num">1</div>
+              <div className="a2hs-step-body">
+                In Chrome's address bar, click the <strong>install icon</strong> on the right
+              </div>
+            </div>
+            <div className="a2hs-step">
+              <div className="a2hs-step-num">2</div>
+              <div className="a2hs-step-body">Click <strong>Install</strong> in the popup</div>
+            </div>
+            <div className="a2hs-step" style={{marginTop: 14, background: '#f1ecdf'}}>
+              <div className="a2hs-step-body" style={{flex: 1, color: 'rgba(14,14,14,0.55)', fontSize: 12}}>
+                Most users will install on their phone instead. Open <strong>dadpaid.vercel.app</strong> in mobile Safari or Chrome to get the best experience.
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="a2hs-foot">
+        <button className="skip" onClick={onDone}>SKIP</button>
+        {platform === 'android' && deferredInstallPrompt && (
+          <button className="primary" onClick={nativeInstall} disabled={busy}>
+            {busy ? 'INSTALLING…' : 'INSTALL →'}
+          </button>
+        )}
+        {(!deferredInstallPrompt || platform !== 'android') && (
+          <button className="primary" onClick={onDone}>GOT IT →</button>
+        )}
       </div>
     </div>
   );
@@ -3335,7 +3596,9 @@ function App() {
   const forceRender = () => bumpVersion((v) => v + 1);
 
   // Bootstrapped from Supabase. Empty members → onboarding. Empty trip → "no trip" screen.
-  const [snapshotState, setSnapshotState] = useState({ family: null, members: [], trip: null });
+  const [snapshotState, setSnapshotState] = useState({ family: null, members: [], trip: null, pastTrips: [] });
+  const [a2hsSeen, setA2hsSeen] = usePersistedState('dp.a2hs.seen', false);
+  const [showA2hs, setShowA2hs] = useState(false);
 
   const [tab, setTab] = useState('add');
   const [overlay, setOverlay] = useState(null);        // null | 'settings' | 'wrap'
@@ -3372,8 +3635,8 @@ function App() {
         const { error: cErr } = await sb.from('families').insert({ name: defaultName, owner_id: user.id });
         if (!cErr) snap = await loadAll();
       }
-      if (!snap) { setSnapshotState({ family: null, members: [], trip: null }); return; }
-      setSnapshotState({ family: snap.family, members: snap.members, trip: snap.trip });
+      if (!snap) { setSnapshotState({ family: null, members: [], trip: null, pastTrips: [] }); return; }
+      setSnapshotState({ family: snap.family, members: snap.members, trip: snap.trip, pastTrips: snap.pastTrips || [] });
       applyServerSnapshot(snap);
       setExpenses(snap.expenses.map(expenseFromDB));
       setEvents(snap.events.map(eventFromDB));
@@ -3611,7 +3874,22 @@ function App() {
 
   const openSettings = () => setOverlay('settings');
   const closeOverlay = () => setOverlay(null);
-  const endTrip = () => setOverlay('wrap');
+
+  async function endTrip() {
+    if (!confirm('End this trip? You can start a new one right after — past trip stays in your archive.')) return;
+    try {
+      if (TRIP.id) {
+        const { error } = await sb.from('trips').update({ status: 'ended' }).eq('id', TRIP.id);
+        if (error) { showToast('Could not end trip — try again'); return; }
+      }
+    } catch { showToast('Could not end trip'); return; }
+    setOverlay('wrap');
+  }
+
+  async function closeWrap() {
+    setOverlay(null);
+    await refreshAll();   // trip now ended → snapshotState.trip becomes null → NoTripScreen
+  }
 
   async function signOut() {
     await sb.auth.signOut();
@@ -3640,7 +3918,14 @@ function App() {
           <div className="island" />
           <OnboardingScreen
             familyId={snapshotState.family.id}
-            onComplete={() => refreshAll()}
+            onComplete={async () => {
+              await refreshAll();
+              // Surface A2HS once after the first successful onboarding,
+              // but only on a non-installed browser context.
+              if (!a2hsSeen && detectPlatform() !== 'installed' && detectPlatform() !== 'desktop') {
+                setShowA2hs(true);
+              }
+            }}
             onSignOut={signOut}
           />
         </div>
@@ -3648,7 +3933,19 @@ function App() {
     );
   }
 
-  // Members exist but no active trip → trip creation
+  // Just finished onboarding (or first-run after install) → "Add to Home Screen" prompt
+  if (showA2hs) {
+    return (
+      <div className="stage">
+        <div className="phone">
+          <div className="island" />
+          <AddToHomeScreen onDone={() => { setA2hsSeen(true); setShowA2hs(false); }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Members exist but no active trip → trip creation, with past-trips archive
   if (snapshotState.family && snapshotState.members.length > 0 && !snapshotState.trip) {
     return (
       <div className="stage">
@@ -3657,6 +3954,7 @@ function App() {
           <NoTripScreen
             familyId={snapshotState.family.id}
             members={snapshotState.members}
+            pastTrips={snapshotState.pastTrips}
             onComplete={() => refreshAll()}
             onSignOut={signOut}
           />
@@ -3675,7 +3973,7 @@ function App() {
           {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} />}
           {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onEditEvent={setEditEvent} />}
           {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} pendingCount={pendingOps.length} userEmail={user.email} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onSignOut={signOut} onEditMember={setEditMember} onEditCard={setEditCard} />}
-          {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeOverlay} onToast={showToast} />}
+          {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeWrap} onToast={showToast} />}
           {!overlay && <BottomNav tab={tab} onTab={setTab} />}
         </div>
         <div className="home-bar" />
