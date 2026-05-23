@@ -757,6 +757,148 @@
   .wiz-btn.ghost { background: transparent; color: #0e0e0e; flex: 0 0 auto; padding: 14px 18px; }
   .wiz-btn.ghost:active { background: #f1ecdf; }
 
+  /* ──────────────── HUB (landing page) ──────────────── */
+  .hub-stage {
+    width: 100%; height: 100%;
+    background: #fffaf0;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .hub-head {
+    background: #0e0e0e; color: #fffaf0;
+    padding: calc(env(safe-area-inset-top) + 18px) 22px 20px;
+    flex-shrink: 0;
+  }
+  .hub-brand {
+    font-family: 'Funnel Display'; font-weight: 900;
+    font-size: clamp(28px, 8vw, 36px);
+    letter-spacing: -0.02em; line-height: 1;
+    color: #e9c44b;
+  }
+  .hub-brand-sub {
+    margin-top: 8px;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.04em;
+    color: rgba(255,250,240,0.6);
+    font-style: italic;
+  }
+  .hub-body {
+    flex: 1; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 22px max(28px, env(safe-area-inset-bottom));
+  }
+  .hub-greeting {
+    font-family: 'Funnel Display'; font-weight: 700;
+    font-size: clamp(15px, 4vw, 17px);
+    line-height: 1.35;
+    color: rgba(14,14,14,0.7);
+    margin-bottom: 22px;
+  }
+  .hub-active {
+    background: #e9c44b;
+    border: 2px solid #0e0e0e;
+    box-shadow: 5px 5px 0 #0e0e0e;
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .hub-active-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: rgba(14,14,14,0.6);
+    margin-bottom: 6px;
+  }
+  .hub-active-name {
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-size: clamp(22px, 6vw, 28px);
+    letter-spacing: -0.01em; line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .hub-active-meta {
+    font-family: 'IBM Plex Mono'; font-weight: 600; font-size: 13px;
+    color: rgba(14,14,14,0.75);
+    margin-bottom: 16px;
+  }
+  .hub-active-cta {
+    background: #0e0e0e; color: #e9c44b;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 12px 16px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    width: 100%;
+    cursor: pointer;
+    transition: transform 0.04s;
+  }
+  .hub-active-cta:active { transform: translate(2px, 2px); }
+
+  .hub-newtrip {
+    background: #fffaf0; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 14px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    width: 100%;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    cursor: pointer;
+    margin-bottom: 32px;
+  }
+  .hub-newtrip:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
+
+  .hub-section {
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(14,14,14,0.55);
+    margin: 0 0 12px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .hub-section .ct { font-family: 'IBM Plex Mono'; font-size: 11px; color: rgba(14,14,14,0.4); }
+  .hub-trip-card {
+    padding: 14px 16px;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    background: #fffaf0;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+  }
+  .hub-trip-card .nm { font-family: 'Funnel Display'; font-weight: 700; font-size: 14px; }
+  .hub-trip-card .dt { font-size: 11px; color: rgba(14,14,14,0.55); margin-top: 3px; }
+  .hub-trip-card .badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    color: rgba(14,14,14,0.4);
+  }
+
+  .hub-empty {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(14,14,14,0.5);
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .hub-empty .big {
+    font-family: 'Funnel Display'; font-weight: 800;
+    font-style: normal;
+    font-size: 16px;
+    color: rgba(14,14,14,0.7);
+    margin-bottom: 6px;
+  }
+  .hub-signout {
+    display: block; width: 100%;
+    background: transparent; border: none;
+    padding: 24px 8px 0;
+    text-align: center;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: rgba(14,14,14,0.35);
+    cursor: pointer;
+  }
+  .hub-signout:active { color: rgba(14,14,14,0.7); }
+
+  /* Home icon in main header */
+  .h-home {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(233,196,75,0.7);
+  }
+  .h-home:active { color: #e9c44b; }
+
   /* ──────────────── ADD-TO-HOME-SCREEN ──────────────── */
   .a2hs-stage {
     width: 100%; height: 100%;
@@ -1594,7 +1736,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
     return (
       <>
         <div className="wiz-prompt">What's your family called?</div>
-        <div className="wiz-help">Just for the trip top-bar. Use whatever feels right — surname, "The Shahs", an inside joke.</div>
+        <div className="wiz-help">Just for the trip top-bar. Use whatever feels right. Surname, "The Shahs", an inside joke.</div>
 
         <div className="wiz-label">Family name</div>
         <input
@@ -1638,7 +1780,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
 
         {cards.length === 0 && (
           <div style={{padding: '32px 0', textAlign: 'center', color: 'rgba(14,14,14,0.5)', fontSize: 13}}>
-            No cards yet. That's fine — Cash works for everything.
+            No cards yet. That's fine. Cash works for everything.
           </div>
         )}
 
@@ -1650,7 +1792,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
                 value={c.ownerName}
                 onChange={(e) => updateCard(i, { ownerName: e.target.value })}
               >
-                <option value="">— OWNER —</option>
+                <option value="">PICK OWNER</option>
                 {validMembers.map((m) => <option key={m.name} value={m.name}>{m.name.toUpperCase()}</option>)}
               </select>
               <button className="wiz-remove" onClick={() => removeCard(i)} aria-label="remove">×</button>
@@ -1685,7 +1827,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
       <>
         <div className="wiz-prompt">Your first trip</div>
         <div className="wiz-help">
-          Where are you going? Dates can be fuzzy — change them later if plans shift.
+          Where are you going. Dates can be fuzzy, change them later if plans shift.
         </div>
 
         <div className="wiz-label">Trip name</div>
@@ -1817,7 +1959,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
 }
 
 /* Standalone "new trip" wizard — for when family exists but no active trip. */
-function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut }) {
+function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut, cancelLabel = 'sign out instead' }) {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const weekOut = new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10);
@@ -1859,7 +2001,7 @@ function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut
       <div className="wiz-body">
         <div className="wiz-prompt">Start a new trip</div>
         <div className="wiz-help">
-          Welcome back. You've got {members.length} family member{members.length === 1 ? '' : 's'} set up — just need a trip to start logging.
+          Welcome back. You've got {members.length} family member{members.length === 1 ? '' : 's'} set up. Just need a trip to start logging.
         </div>
 
         <div className="wiz-label">Trip name</div>
@@ -1928,12 +2070,12 @@ function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut
             padding: 12, width: '100%',
           }}
         >
-          sign out instead
+          {cancelLabel}
         </button>
       </div>
       <div className="wiz-foot">
         <button className="wiz-btn primary" disabled={!canFinish || busy} onClick={finish}>
-          {busy ? 'CREATING…' : 'START TRIP →'}
+          {busy ? 'CREATING…' : 'START TRIP ›'}
         </button>
       </div>
     </div>
@@ -1990,7 +2132,7 @@ function AddToHomeScreen({ onDone }) {
       <div className="a2hs-body">
         <div className="a2hs-prompt">Add Dad Paid to your Home Screen</div>
         <div className="a2hs-help">
-          Opens like a native app — no URL bar, full screen, faster load.
+          Opens like a native app. No URL bar, full screen, faster load.
           Works fully offline once installed. Optional.
         </div>
 
@@ -2017,7 +2159,7 @@ function AddToHomeScreen({ onDone }) {
             </div>
             <div className="a2hs-step">
               <div className="a2hs-step-num">4</div>
-              <div className="a2hs-step-body">Open Dad Paid from your home screen — done</div>
+              <div className="a2hs-step-body">Open Dad Paid from your home screen. Done.</div>
             </div>
           </>
         )}
@@ -2026,7 +2168,7 @@ function AddToHomeScreen({ onDone }) {
           deferredInstallPrompt ? (
             <div className="a2hs-step" style={{justifyContent: 'center'}}>
               <div className="a2hs-step-body" style={{textAlign: 'center', flex: 1}}>
-                Tap <strong>Install</strong> below — Chrome will show its install prompt.
+                Tap <strong>Install</strong> below. Chrome will show its install prompt.
               </div>
             </div>
           ) : (
@@ -2125,7 +2267,7 @@ function LoginScreen() {
       <div className="login-card">
         <div className="login-brand">
           <div className="login-title">DAD PAID</div>
-          <div className="login-tagline">Because on every trip — dad paid.</div>
+          <div className="login-tagline">Because on every trip, dad paid.</div>
         </div>
         {sent ? (
           <div className="login-sent">
@@ -2149,7 +2291,7 @@ function LoginScreen() {
               {busy ? 'SENDING…' : 'SEND MAGIC LINK →'}
             </button>
             <div className="login-help">
-              One shared family account. All three phones sign in with the same email. We'll mail you a link — no password.
+              One shared family account. All three phones sign in with the same email. We'll mail you a link. No password.
             </div>
           </form>
         )}
@@ -2262,7 +2404,7 @@ function Avatar({ id, size = 'sm', selected = false }) {
   );
 }
 
-function Header({ title, sub, right, rightSub, onGear, onBack, offline }) {
+function Header({ title, sub, right, rightSub, onGear, onBack, onHome, offline }) {
   return (
     <div className="header">
       {onBack && (
@@ -2285,6 +2427,11 @@ function Header({ title, sub, right, rightSub, onGear, onBack, offline }) {
               <div className="h-right">{right}</div>
               {rightSub && <div className="h-right-sub">{rightSub}</div>}
             </div>
+            {onHome && (
+              <button className="h-home" onClick={onHome} aria-label="home">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </button>
+            )}
             {onGear && (
               <button className="h-gear" onClick={onGear} aria-label="settings">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -2327,7 +2474,7 @@ const SPLIT_OPTIONS = [
   { id: 'just-me',  label: 'JUST PAYER', sub: 'Personal · not shared' },
 ];
 
-function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear }) {
+function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onHome }) {
   const [amount, setAmount] = useState('');           // raw string: "12" or "12.5" or "12.50"
   const [currency, setCurrency] = useState('GBP');
   const [category, setCategory] = useState('Food');
@@ -2427,6 +2574,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear }) {
         sub={`${TRIP.shortName} · ${fmtFull(todayTotal, 'GBP')} so far today`}
         right={`D ${TRIP.currentDay} / ${TRIP.totalDays}`}
         onGear={onGear}
+        onHome={onHome}
         offline={!online}
       />
 
@@ -2559,7 +2707,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear }) {
    LEDGER (Timeline)
    ════════════════════════════════════════════════════════════════════ */
 
-function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto, onOpenEdit }) {
+function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto, onOpenEdit }) {
   const [filter, setFilter] = useState('all'); // all | mine | gbp | inr
   const filtered = useMemo(() => {
     return expenses.filter(e => {
@@ -2596,6 +2744,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto, onOpen
         right={`${expenses.length}`}
         rightSub="ENTRIES"
         onGear={onGear}
+        onHome={onHome}
         offline={!online}
       />
 
@@ -2610,7 +2759,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto, onOpen
           <EmptyState
             glyph="🍴"
             line="First expense will land here."
-            sub="Probably coffee. Tap ADD to log one — it'll show up under TODAY with a fresh-mustard flash."
+            sub="Probably coffee. Tap ADD to log one. It'll show up under TODAY with a fresh-mustard flash."
           />
         )}
 
@@ -2646,7 +2795,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto, onOpen
         })}
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
-          ── end of ledger ── trip total {fmtFull(totalAll, 'GBP')} ──
+          end of ledger · trip total {fmtFull(totalAll, 'GBP')}
         </div>
       </div>
     </>
@@ -2721,7 +2870,7 @@ function PhotoLightbox({ expense, onClose }) {
    SUMMARY (Dashboard)
    ════════════════════════════════════════════════════════════════════ */
 
-function SummaryScreen({ expenses, todayDate, online, onGear }) {
+function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
   const gbp = totalFor(expenses, { currency: 'GBP' });
   const inr = totalFor(expenses, { currency: 'INR' });
 
@@ -2759,6 +2908,7 @@ function SummaryScreen({ expenses, todayDate, online, onGear }) {
         right={`D ${TRIP.currentDay}`}
         rightSub={`/ ${TRIP.totalDays}`}
         onGear={onGear}
+        onHome={onHome}
         offline={!online}
       />
 
@@ -2767,7 +2917,7 @@ function SummaryScreen({ expenses, todayDate, online, onGear }) {
           <EmptyState
             glyph="📊"
             line="Numbers appear once money does."
-            sub="Log a few expenses, then come back here — totals, category bars, who-paid-most, and a live settlement preview will fill in."
+            sub="Log a few expenses, then come back here. Totals, category bars, who-paid-most, and a live settlement preview will fill in."
           />
         ) : (
         <>
@@ -2776,7 +2926,7 @@ function SummaryScreen({ expenses, todayDate, online, onGear }) {
           <div className="sum-total primary">
             <div className="lbl">GBP SPEND</div>
             <div className="amt">£{fmtMajor(gbp, 'GBP')}</div>
-            <div className="meta">{gbp === 0 ? '—' : 'incl. flights + hotel'}</div>
+            <div className="meta">{gbp === 0 ? '·' : 'incl. flights + hotel'}</div>
           </div>
           <div className="sum-total">
             <div className="lbl">INR SPEND</div>
@@ -2840,7 +2990,7 @@ function SummaryScreen({ expenses, todayDate, online, onGear }) {
         <Settlement expenses={expenses} />
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
-          ── settlement locks when trip ends ──
+          settlement locks when trip ends
         </div>
         </>
         )}
@@ -2926,7 +3076,7 @@ function Settlement({ expenses }) {
    TOMORROW (Events + Vault)
    ════════════════════════════════════════════════════════════════════ */
 
-function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGear, onEditEvent }) {
+function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGear, onHome, onEditEvent }) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('10:00');
@@ -2952,6 +3102,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
         right="D 5"
         rightSub="OF 8"
         onGear={onGear}
+        onHome={onHome}
         offline={!online}
       />
 
@@ -3027,7 +3178,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
         </div>
         {vault.length === 0 && (
           <div style={{padding: '18px 22px', fontSize: 12, color: 'rgba(14,14,14,0.55)', textAlign: 'center', fontStyle: 'italic'}}>
-            Hotel confirmations, tickets, insurance PDFs — drop them here later.
+            Hotel confirmations, tickets, insurance PDFs. Drop them here later.
           </div>
         )}
         {vault.map(v => (
@@ -3043,7 +3194,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
         ))}
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
-          ── that's tomorrow ──
+          that's tomorrow
         </div>
       </div>
     </>
@@ -3220,7 +3371,7 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
               <div className="k">pre-trip</div>
             </div>
             <div className="wrap-stat">
-              <div className="v">{topCat ? topCat[0] : '—'}</div>
+              <div className="v">{topCat ? topCat[0] : '·'}</div>
               <div className="k">top category</div>
             </div>
           </div>
@@ -3246,7 +3397,7 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
         </div>
 
         <div style={{padding: '8px 22px 32px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
-          ── on every trip · dad paid ──
+          on every trip, dad paid
         </div>
       </div>
     </>
@@ -3585,6 +3736,98 @@ function EditCardSheet({ card, onSave, onDelete, onClose }) {
 }
 
 /* ════════════════════════════════════════════════════════════════════
+   HUB (landing dashboard)
+   ════════════════════════════════════════════════════════════════════ */
+
+function pickGreeting() {
+  const h = new Date().getHours();
+  if (h < 6)  return "logging expenses after midnight. dedicated of you.";
+  if (h < 12) return "morning. someone's buying breakfast.";
+  if (h < 17) return "afternoon. small charges add up.";
+  if (h < 21) return "evening. dinner round, probably.";
+  return "late. someone's still adding up the tube card.";
+}
+
+function formatDateShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).toLowerCase();
+}
+
+function HubScreen({ family, activeTrip, pastTrips, expenses, online, onOpenTrip, onNewTrip, onSignOut }) {
+  const greeting = pickGreeting();
+
+  const activeTotal = activeTrip
+    ? expenses.reduce((sum, e) => e.currency === (activeTrip.primary_currency || 'GBP') ? sum + e.amount : sum, 0)
+    : 0;
+  const activeDays = activeTrip
+    ? Math.max(1, Math.round((new Date(activeTrip.end_date) - new Date(activeTrip.start_date)) / 86400000) + 1)
+    : 0;
+  const activeCurrent = activeTrip
+    ? Math.max(1, Math.min(activeDays, Math.floor((Date.now() - new Date(activeTrip.start_date).getTime()) / 86400000) + 1))
+    : 0;
+
+  const familyName = family?.name || 'family';
+
+  return (
+    <div className="hub-stage">
+      <div className="hub-head">
+        <div className="hub-brand">DAD PAID</div>
+        <div className="hub-brand-sub">{familyName}'s travel ledger. mild guilt, lightly tracked.</div>
+      </div>
+
+      <div className="hub-body">
+        <div className="hub-greeting">{greeting}</div>
+
+        {activeTrip && (
+          <div className="hub-active">
+            <div className="hub-active-tag">currently in</div>
+            <div className="hub-active-name">{activeTrip.name}</div>
+            <div className="hub-active-meta">
+              day {activeCurrent} of {activeDays} · {symbol(activeTrip.primary_currency || 'GBP')}{fmtMajor(activeTotal, activeTrip.primary_currency || 'GBP')} so far
+            </div>
+            <button className="hub-active-cta" onClick={onOpenTrip}>open trip ›</button>
+          </div>
+        )}
+
+        <button className="hub-newtrip" onClick={onNewTrip}>
+          + start a new trip
+        </button>
+
+        {pastTrips.length > 0 && (
+          <>
+            <div className="hub-section">
+              <span>the archive</span>
+              <span className="ct">{pastTrips.length}</span>
+            </div>
+            {pastTrips.map((t) => (
+              <div key={t.id} className="hub-trip-card">
+                <div style={{flex: 1, minWidth: 0}}>
+                  <div className="nm">{t.name}</div>
+                  <div className="dt">
+                    {formatDateShort(t.start_date)} to {formatDateShort(t.end_date)} · {t.primary_currency}
+                  </div>
+                </div>
+                <div className="badge">ended</div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {pastTrips.length === 0 && !activeTrip && (
+          <div className="hub-empty">
+            <div className="big">no trips yet.</div>
+            it's quiet. shiny new keypad,<br />vague sense of optimism.
+          </div>
+        )}
+
+        <button className="hub-signout" onClick={onSignOut}>sign out</button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
    APP
    ════════════════════════════════════════════════════════════════════ */
 
@@ -3600,6 +3843,7 @@ function App() {
   const [a2hsSeen, setA2hsSeen] = usePersistedState('dp.a2hs.seen', false);
   const [showA2hs, setShowA2hs] = useState(false);
 
+  const [view, setView] = useState('hub');             // 'hub' | 'trip' | 'new-trip'
   const [tab, setTab] = useState('add');
   const [overlay, setOverlay] = useState(null);        // null | 'settings' | 'wrap'
   const [photoExpense, setPhotoExpense] = useState(null);
@@ -3842,7 +4086,7 @@ function App() {
   async function deleteMemberLocal(m) {
     if (FAMILY.members.length <= 2) { showToast('Need at least 2 members'); return; }
     const { error } = await sb.from('family_members').delete().eq('id', m.id);
-    if (error) { showToast('Remove failed — they may have expenses'); return; }
+    if (error) { showToast('Remove failed. They may have expenses.'); return; }
     await refreshAll();
     setEditMember(null);
     showToast('Member removed');
@@ -3876,11 +4120,11 @@ function App() {
   const closeOverlay = () => setOverlay(null);
 
   async function endTrip() {
-    if (!confirm('End this trip? You can start a new one right after — past trip stays in your archive.')) return;
+    if (!confirm('End this trip? You can start a new one right after. Past trip stays in your archive.')) return;
     try {
       if (TRIP.id) {
         const { error } = await sb.from('trips').update({ status: 'ended' }).eq('id', TRIP.id);
-        if (error) { showToast('Could not end trip — try again'); return; }
+        if (error) { showToast('Could not end trip. Try again.'); return; }
       }
     } catch { showToast('Could not end trip'); return; }
     setOverlay('wrap');
@@ -3888,7 +4132,8 @@ function App() {
 
   async function closeWrap() {
     setOverlay(null);
-    await refreshAll();   // trip now ended → snapshotState.trip becomes null → NoTripScreen
+    await refreshAll();
+    setView('hub');  // land back on the hub with the just-ended trip in the archive
   }
 
   async function signOut() {
@@ -3920,8 +4165,7 @@ function App() {
             familyId={snapshotState.family.id}
             onComplete={async () => {
               await refreshAll();
-              // Surface A2HS once after the first successful onboarding,
-              // but only on a non-installed browser context.
+              setView('hub');
               if (!a2hsSeen && detectPlatform() !== 'installed' && detectPlatform() !== 'desktop') {
                 setShowA2hs(true);
               }
@@ -3933,7 +4177,7 @@ function App() {
     );
   }
 
-  // Just finished onboarding (or first-run after install) → "Add to Home Screen" prompt
+  // Just finished onboarding → "Add to Home Screen" prompt (one-time)
   if (showA2hs) {
     return (
       <div className="stage">
@@ -3945,8 +4189,31 @@ function App() {
     );
   }
 
-  // Members exist but no active trip → trip creation, with past-trips archive
-  if (snapshotState.family && snapshotState.members.length > 0 && !snapshotState.trip) {
+  // Hub is the default landing (after login, after ending a trip, after onboarding)
+  if (view === 'hub') {
+    return (
+      <div className="stage">
+        <div className="phone">
+          <div className="island" />
+          <HubScreen
+            family={snapshotState.family}
+            activeTrip={snapshotState.trip}
+            pastTrips={snapshotState.pastTrips}
+            expenses={expenses}
+            online={online}
+            onOpenTrip={() => setView('trip')}
+            onNewTrip={() => setView('new-trip')}
+            onSignOut={signOut}
+          />
+          <div className="home-bar" />
+          {toast && <div className="toast">{toast}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // New trip wizard (reached from hub's "Start a new trip" button)
+  if (view === 'new-trip') {
     return (
       <div className="stage">
         <div className="phone">
@@ -3955,12 +4222,19 @@ function App() {
             familyId={snapshotState.family.id}
             members={snapshotState.members}
             pastTrips={snapshotState.pastTrips}
-            onComplete={() => refreshAll()}
-            onSignOut={signOut}
+            onComplete={async () => { await refreshAll(); setView('trip'); }}
+            onSignOut={() => setView('hub')}
+            cancelLabel="← back to home"
           />
         </div>
       </div>
     );
+  }
+
+  // view === 'trip' but no active trip → fall back to hub (defensive)
+  if (!snapshotState.trip) {
+    setView('hub');
+    return null;
   }
 
   return (
@@ -3968,10 +4242,10 @@ function App() {
       <div className="phone">
         <div className="island" />
         <div className="screen">
-          {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} onAdd={addExpense} onToast={showToast} onGear={openSettings} />}
-          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} />}
-          {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} />}
-          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onEditEvent={setEditEvent} />}
+          {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} onAdd={addExpense} onToast={showToast} onGear={openSettings} onHome={() => setView('hub')} />}
+          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} />}
+          {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} />}
+          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onHome={() => setView('hub')} onEditEvent={setEditEvent} />}
           {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} pendingCount={pendingOps.length} userEmail={user.email} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onSignOut={signOut} onEditMember={setEditMember} onEditCard={setEditCard} />}
           {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeWrap} onToast={showToast} />}
           {!overlay && <BottomNav tab={tab} onTab={setTab} />}
