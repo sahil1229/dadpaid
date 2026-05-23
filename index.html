@@ -1739,17 +1739,6 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
   // cards (optional)
   const [cards, setCards] = useState([]);
 
-  // trip
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  const weekOut = new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10);
-  const [tripName, setTripName] = useState('');
-  const [shortName, setShortName] = useState('');
-  const [startDate, setStartDate] = useState(todayStr);
-  const [endDate, setEndDate] = useState(weekOut);
-  const [currency, setCurrency] = useState('GBP');
-  const [defaultSplit, setDefaultSplit] = useState('everyone');
-
   function addCard() {
     setCards((prev) => [...prev, { nick: '', last4: '' }]);
   }
@@ -1758,24 +1747,22 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
   }
   function removeCard(i) { setCards((prev) => prev.filter((_, ix) => ix !== i)); }
 
-  const canContinue1 = myName.trim().length > 0;
-  const canContinue2 = true; // cards are optional
-  const canFinish = tripName.trim().length > 0 && startDate && endDate && startDate <= endDate;
+  // Step 1 = welcome (no input). Step 2 = profile. Step 3 = cards (optional).
+  const canContinue1 = true;
+  const canContinue2 = myName.trim().length > 0;
 
-  async function finish(opts = {}) {
-    const skipTrip = !!opts.skipTrip;
+  async function finish() {
     if (submitLock.current) return;
-    if (!skipTrip && !canFinish) return;
     submitLock.current = true;
     setBusy(true); setErr(null);
     try {
       if (!familyId) throw new Error('Family not loaded. Sign out and back in.');
 
-      // 1. update family name to user's name (used as the hub tagline)
+      // 1. update family name to the user's display name
       const { error: fErr } = await sb.from('families').update({ name: myName.trim() }).eq('id', familyId);
       if (fErr) throw new Error('family update failed: ' + fErr.message);
 
-      // 2. ensure exactly one member (the user). Re-use if any already exists.
+      // 2. ensure exactly one member (the user). Re-use any existing row.
       const { data: existingMembers, error: emErr } = await sb.from('family_members')
         .select('id').eq('family_id', familyId);
       if (emErr) throw new Error('members lookup failed: ' + emErr.message);
@@ -1783,7 +1770,6 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
       let myMemberId;
       if (existingMembers && existingMembers.length > 0) {
         myMemberId = existingMembers[0].id;
-        // also bring color/name in line with what the user typed this round
         await sb.from('family_members').update({
           name: myName.trim(), initial: initialFor(myName), color: myColor,
         }).eq('id', myMemberId);
@@ -1800,7 +1786,7 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
         if (mErr) throw new Error('member insert failed: ' + mErr.message);
       }
 
-      // 3. insert any new cards (dedupe by nick)
+      // 3. insert any new cards
       const { data: existingCards } = await sb.from('family_cards')
         .select('nick').eq('family_id', familyId);
       const existingCardNicks = new Set((existingCards || []).map((c) => c.nick));
@@ -1819,24 +1805,7 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
         if (cErr) throw new Error('card insert failed: ' + cErr.message);
       }
 
-      // 4. insert trip — unless skipping, or family already has an active trip
-      if (!skipTrip) {
-        const { data: existingTrips } = await sb.from('trips')
-          .select('id').eq('family_id', familyId).eq('status', 'active').limit(1);
-        if (!existingTrips || existingTrips.length === 0) {
-          const { error: tErr } = await sb.from('trips').insert({
-            family_id: familyId,
-            name: tripName.trim(),
-            short_name: (shortName.trim() || tripName.trim().split(/\s+/)[0]).toUpperCase().slice(0, 16),
-            start_date: startDate,
-            end_date: endDate,
-            primary_currency: currency,
-            default_split: defaultSplit,
-          });
-          if (tErr) throw new Error('trip insert failed: ' + tErr.message);
-        }
-      }
-
+      // Done. The hub will offer "new trip" or "join with code".
       onComplete();
     } catch (e) {
       console.error('onboarding finish failed', e);
@@ -1847,7 +1816,50 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
     }
   }
 
-  function renderStep1() {
+  function renderWelcome() {
+    return (
+      <>
+        <div className="wiz-prompt">Welcome to Dad Paid.</div>
+        <div className="wiz-help" style={{marginBottom: 18}}>
+          The family travel expense tracker. Mild guilt, lightly tracked.
+        </div>
+
+        <div className="wiz-label">How it works</div>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10}}>
+          <div style={{display: 'flex', gap: 14, alignItems: 'flex-start'}}>
+            <div className="wiz-initial" style={{width: 32, height: 32, fontSize: 13, flexShrink: 0}}>1</div>
+            <div style={{fontSize: 13, lineHeight: 1.5, paddingTop: 4}}>
+              Start a trip. Hit the keypad. Each expense logs in about 8 seconds.
+            </div>
+          </div>
+          <div style={{display: 'flex', gap: 14, alignItems: 'flex-start'}}>
+            <div className="wiz-initial" style={{width: 32, height: 32, fontSize: 13, flexShrink: 0}}>2</div>
+            <div style={{fontSize: 13, lineHeight: 1.5, paddingTop: 4}}>
+              Invite family or friends with a share link. Each person uses their own email.
+            </div>
+          </div>
+          <div style={{display: 'flex', gap: 14, alignItems: 'flex-start'}}>
+            <div className="wiz-initial" style={{width: 32, height: 32, fontSize: 13, flexShrink: 0}}>3</div>
+            <div style={{fontSize: 13, lineHeight: 1.5, paddingTop: 4}}>
+              At trip end we compute who owes whom. Settle outside the app, however you usually do.
+            </div>
+          </div>
+          <div style={{display: 'flex', gap: 14, alignItems: 'flex-start'}}>
+            <div className="wiz-initial" style={{width: 32, height: 32, fontSize: 13, flexShrink: 0}}>4</div>
+            <div style={{fontSize: 13, lineHeight: 1.5, paddingTop: 4}}>
+              Works offline. Add expenses on the Tube, syncs when you're back.
+            </div>
+          </div>
+        </div>
+
+        <div style={{marginTop: 24, padding: 12, background: '#f1ecdf', border: '2px solid #0e0e0e', borderRadius: 4, fontSize: 12, lineHeight: 1.5, color: 'rgba(14,14,14,0.7)'}}>
+          Next: set up your profile. Then the hub appears and you can either start a new trip or join one with a code.
+        </div>
+      </>
+    );
+  }
+
+  function renderProfile() {
     return (
       <>
         <div className="wiz-prompt">Who are you?</div>
@@ -1883,7 +1895,7 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
     );
   }
 
-  function renderStep2() {
+  function renderCards() {
     return (
       <>
         <div className="wiz-prompt">Your payment cards?</div>
@@ -1925,78 +1937,9 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
     );
   }
 
-  function renderStep3() {
-    return (
-      <>
-        <div className="wiz-prompt">Your first trip</div>
-        <div className="wiz-help">
-          Where are you going. Dates can be fuzzy, change them later if plans shift.
-        </div>
-
-        <div className="wiz-label">Trip name</div>
-        <input
-          className="wiz-input"
-          value={tripName}
-          onChange={(e) => setTripName(e.target.value)}
-          placeholder="e.g. London Dec '25"
-        />
-
-        <div className="wiz-label">Short tag (header badge)</div>
-        <input
-          className="wiz-input"
-          value={shortName}
-          onChange={(e) => setShortName(e.target.value.toUpperCase().slice(0, 16))}
-          placeholder={(tripName.split(/\s+/)[0] || 'LONDON').toUpperCase()}
-        />
-
-        <div className="wiz-label">Dates</div>
-        <div className="wiz-date-row">
-          <input
-            type="date"
-            className="wiz-input"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <input
-            type="date"
-            className="wiz-input"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-
-        <div className="wiz-label">Primary currency</div>
-        <div className="wiz-select-row">
-          {CURRENCY_OPTIONS.map((c) => (
-            <div
-              key={c.code}
-              className={`wiz-radio ${currency === c.code ? 'active' : ''}`}
-              onClick={() => setCurrency(c.code)}
-            >
-              {c.label}
-            </div>
-          ))}
-        </div>
-
-        <div className="wiz-label">Default split</div>
-        <div className="wiz-select-row">
-          {SPLIT_PRESETS.map((s) => (
-            <div
-              key={s.id}
-              className={`wiz-radio ${defaultSplit === s.id ? 'active' : ''}`}
-              onClick={() => setDefaultSplit(s.id)}
-              style={{gridColumn: 'span 1', padding: '12px 10px'}}
-            >
-              {s.label}
-              <span className="sub">{s.sub}</span>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  }
-
-  const stepTitle = step === 1 ? 'Step 1 of 3 · Family' : step === 2 ? 'Step 2 of 3 · Cards' : 'Step 3 of 3 · First trip';
+  const stepTitle = step === 1 ? 'Step 1 of 3 · Welcome'
+                  : step === 2 ? 'Step 2 of 3 · You'
+                  : 'Step 3 of 3 · Cards';
 
   return (
     <div className="wiz-stage">
@@ -2011,9 +1954,9 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
       </div>
 
       <div className="wiz-body">
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
+        {step === 1 && renderWelcome()}
+        {step === 2 && renderProfile()}
+        {step === 3 && renderCards()}
 
         {err && (
           <div className="login-err" style={{marginTop: 16}}>{err}</div>
@@ -2048,23 +1991,14 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
           </button>
         )}
         {step === 3 && (
-          <>
-            <button
-              className="wiz-btn ghost"
-              disabled={busy}
-              onClick={() => finish({ skipTrip: true })}
-              style={{flex: 1}}
-            >
-              SKIP, ADD LATER
-            </button>
-            <button
-              className="wiz-btn primary"
-              disabled={!canFinish || busy}
-              onClick={() => finish()}
-            >
-              {busy ? 'SAVING…' : 'FINISH'}
-            </button>
-          </>
+          <button
+            className="wiz-btn primary"
+            disabled={busy}
+            onClick={() => finish()}
+            style={{flex: 1}}
+          >
+            {busy ? 'SAVING…' : 'FINISH SETUP'}
+          </button>
         )}
       </div>
     </div>
