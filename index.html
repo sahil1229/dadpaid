@@ -829,6 +829,22 @@
   }
   .hub-active-cta:active { transform: translate(2px, 2px); }
 
+  .hub-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 32px;
+  }
+  .hub-actions .full { grid-column: 1 / -1; }
+  .hub-actionbtn {
+    background: #fffaf0; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 14px 12px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 13px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    cursor: pointer;
+    transition: transform 0.04s, box-shadow 0.04s;
+  }
+  .hub-actionbtn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
   .hub-newtrip {
     background: #fffaf0; color: #0e0e0e;
     border: 2px solid #0e0e0e; border-radius: 4px;
@@ -838,7 +854,6 @@
     width: 100%;
     box-shadow: 4px 4px 0 #0e0e0e;
     cursor: pointer;
-    margin-bottom: 32px;
   }
   .hub-newtrip:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #0e0e0e; }
 
@@ -1749,17 +1764,15 @@ function uid(prefix = '') {
 }
 
 /* Step 1 of onboarding: family name + members */
-function OnboardingScreen({ familyId, onComplete, onSignOut }) {
+function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
-  // family
-  const [familyName, setFamilyName] = useState('');
-  const [members, setMembers] = useState([
-    { name: '', initial: '' },
-    { name: '', initial: '' },
-  ]);
+  // self (single user — one email per person now)
+  const defaultName = userEmail ? userEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
+  const [myName, setMyName] = useState(defaultName);
+  const [myColor, setMyColor] = useState(MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)]);
 
   // cards (optional)
   const [cards, setCards] = useState([]);
@@ -1775,24 +1788,15 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
   const [currency, setCurrency] = useState('GBP');
   const [defaultSplit, setDefaultSplit] = useState('everyone');
 
-  function updateMember(i, patch) {
-    setMembers((prev) => prev.map((m, ix) => ix === i ? { ...m, ...patch } : m));
-  }
-  function addMember() { setMembers((prev) => [...prev, { name: '', initial: '' }]); }
-  function removeMember(i) { setMembers((prev) => prev.filter((_, ix) => ix !== i)); }
-
   function addCard() {
-    setCards((prev) => [...prev, { ownerName: members[0]?.name || '', nick: '', last4: '' }]);
+    setCards((prev) => [...prev, { nick: '', last4: '' }]);
   }
   function updateCard(i, patch) {
     setCards((prev) => prev.map((c, ix) => ix === i ? { ...c, ...patch } : c));
   }
   function removeCard(i) { setCards((prev) => prev.filter((_, ix) => ix !== i)); }
 
-  const validMembers = members
-    .map((m) => ({ ...m, name: m.name.trim() }))
-    .filter((m) => m.name.length > 0);
-  const canContinue1 = familyName.trim().length > 0 && validMembers.length >= 2;
+  const canContinue1 = myName.trim().length > 0;
   const canContinue2 = true; // cards are optional
   const canFinish = tripName.trim().length > 0 && startDate && endDate && startDate <= endDate;
 
@@ -1801,43 +1805,41 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
     if (!skipTrip && !canFinish) return;
     setBusy(true); setErr(null);
     try {
-      // Idempotency: if a previous submit half-finished (members inserted, trip didn't),
-      // detect that here and skip the duplicate inserts.
+      // Idempotency check
       const { data: existingMembers } = await sb.from('family_members')
         .select('id, name').eq('family_id', familyId);
       const hasMembers = (existingMembers || []).length > 0;
 
-      // 1. update family name
-      await sb.from('families').update({ name: familyName.trim() }).eq('id', familyId);
+      // 1. update family name to user's name (used as the hub tagline)
+      await sb.from('families').update({ name: myName.trim() }).eq('id', familyId);
 
-      // 2. insert members with UUID-based IDs (globally unique across all families)
-      let memberByName;
+      // 2. insert ME as the single family member
+      let myMemberId;
       if (hasMembers) {
-        // Re-use already-inserted members. Match by trimmed name.
-        memberByName = Object.fromEntries(existingMembers.map((m) => [m.name.trim(), m.id]));
+        myMemberId = existingMembers[0].id;
       } else {
-        const memberRows = validMembers.map((m, i) => ({
-          id: uid('mem'),
+        myMemberId = uid('mem');
+        const { error: mErr } = await sb.from('family_members').insert([{
+          id: myMemberId,
           family_id: familyId,
-          name: m.name,
-          initial: m.initial || initialFor(m.name),
-          position: i,
-        }));
-        const { error: mErr } = await sb.from('family_members').insert(memberRows);
+          name: myName.trim(),
+          initial: initialFor(myName),
+          color: myColor,
+          position: 0,
+        }]);
         if (mErr) throw mErr;
-        memberByName = Object.fromEntries(memberRows.map((m) => [m.name, m.id]));
       }
 
-      // 3. insert cards (skip any that already exist by nick)
+      // 3. insert my cards
       const { data: existingCards } = await sb.from('family_cards')
         .select('nick').eq('family_id', familyId);
       const existingCardNicks = new Set((existingCards || []).map((c) => c.nick));
       const cardRows = cards
-        .filter((c) => c.nick.trim() && memberByName[c.ownerName] && !existingCardNicks.has(c.nick.trim()))
+        .filter((c) => c.nick.trim() && !existingCardNicks.has(c.nick.trim()))
         .map((c, i) => ({
           id: uid('card'),
           family_id: familyId,
-          owner_member_id: memberByName[c.ownerName],
+          owner_member_id: myMemberId,
           nick: c.nick.trim(),
           last4: c.last4.trim() || null,
           position: i,
@@ -1876,37 +1878,35 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
   function renderStep1() {
     return (
       <>
-        <div className="wiz-prompt">What's your family called?</div>
-        <div className="wiz-help">Just for the trip top-bar. Use whatever feels right. Surname, "The Shahs", an inside joke.</div>
-
-        <div className="wiz-label">Family name</div>
-        <input
-          autoFocus
-          className="wiz-input"
-          value={familyName}
-          onChange={(e) => setFamilyName(e.target.value)}
-          placeholder="e.g. The Shahs"
-        />
-
-        <div className="wiz-label" style={{marginTop: 24}}>Family members</div>
-        <div className="wiz-help" style={{marginBottom: 10}}>
-          Anyone who pays for stuff on trips. Two minimum. You can edit later.
+        <div className="wiz-prompt">Who are you?</div>
+        <div className="wiz-help">
+          Just your name and a color. Each person uses their own email. Friends and family join your trips with their own accounts via an invite link.
         </div>
-        {members.map((m, i) => (
-          <div key={i} className="wiz-member-row">
-            <div className="wiz-initial">{m.initial || initialFor(m.name) || '?'}</div>
-            <input
-              className="wiz-input-sm"
-              value={m.name}
-              onChange={(e) => updateMember(i, { name: e.target.value, initial: initialFor(e.target.value) })}
-              placeholder={`Member ${i + 1}`}
+
+        <div className="wiz-label">Your name</div>
+        <div className="wiz-member-row">
+          <div className="wiz-initial" style={{background: myColor, color: '#0e0e0e'}}>{initialFor(myName) || '?'}</div>
+          <input
+            autoFocus
+            className="wiz-input-sm"
+            value={myName}
+            onChange={(e) => setMyName(e.target.value)}
+            placeholder="e.g. Sahil"
+          />
+        </div>
+
+        <div className="wiz-label" style={{marginTop: 24}}>Your color</div>
+        <div className="color-row">
+          {MEMBER_COLORS.map((c) => (
+            <div
+              key={c}
+              className={`swatch ${myColor === c ? 'selected' : ''}`}
+              style={{background: c}}
+              onClick={() => setMyColor(c)}
+              aria-label={`color ${c}`}
             />
-            {members.length > 2 && (
-              <button className="wiz-remove" onClick={() => removeMember(i)} aria-label="remove">×</button>
-            )}
-          </div>
-        ))}
-        <button className="wiz-add" onClick={addMember}>+ ADD MEMBER</button>
+          ))}
+        </div>
       </>
     );
   }
@@ -1914,9 +1914,9 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
   function renderStep2() {
     return (
       <>
-        <div className="wiz-prompt">Payment cards?</div>
+        <div className="wiz-prompt">Your payment cards?</div>
         <div className="wiz-help">
-          Optional. Last 4 digits help you tell "Dad's HDFC" from his Amex when picking who paid. You can skip and add later.
+          Optional. Last 4 digits help you remember which card paid for something later. You can add more from Settings.
         </div>
 
         {cards.length === 0 && (
@@ -1926,19 +1926,8 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
         )}
 
         {cards.map((c, i) => (
-          <div key={i} style={{marginBottom: 14, paddingBottom: 14, borderBottom: '1.5px dashed rgba(14,14,14,0.2)'}}>
+          <div key={i} style={{marginBottom: 10}}>
             <div className="wiz-card-row">
-              <select
-                className="owner-select"
-                value={c.ownerName}
-                onChange={(e) => updateCard(i, { ownerName: e.target.value })}
-              >
-                <option value="">PICK OWNER</option>
-                {validMembers.map((m) => <option key={m.name} value={m.name}>{m.name.toUpperCase()}</option>)}
-              </select>
-              <button className="wiz-remove" onClick={() => removeCard(i)} aria-label="remove">×</button>
-            </div>
-            <div className="wiz-card-row" style={{marginTop: 6}}>
               <input
                 className="wiz-input-sm"
                 value={c.nick}
@@ -1954,6 +1943,7 @@ function OnboardingScreen({ familyId, onComplete, onSignOut }) {
                 style={{maxWidth: 80}}
                 inputMode="numeric"
               />
+              <button className="wiz-remove" onClick={() => removeCard(i)} aria-label="remove">×</button>
             </div>
           </div>
         ))}
@@ -3616,6 +3606,63 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
   );
 }
 
+function JoinInviteModal({ onJoin, onClose }) {
+  const [val, setVal] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  function extractCode(s) {
+    if (!s) return '';
+    const trimmed = s.trim();
+    // Try parsing as URL with ?invite=
+    const m = trimmed.match(/[?&]invite=([A-Za-z0-9]+)/);
+    if (m) return m[1];
+    // Otherwise assume it's the bare code (12 hex chars)
+    return trimmed.replace(/[^A-Za-z0-9]/g, '');
+  }
+
+  async function submit() {
+    const code = extractCode(val);
+    if (!code) { setErr('Paste an invite link or 12-character code'); return; }
+    setBusy(true); setErr(null);
+    try {
+      await onJoin(code);
+      onClose();
+    } catch (e) {
+      setErr(String(e?.message || e));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="backdrop" onClick={onClose} />
+      <div className="invite-modal">
+        <div className="invite-title">JOIN A TRIP</div>
+        <div className="invite-sub">
+          Paste the invite link or 12-character code someone shared with you.
+        </div>
+        <input
+          autoFocus
+          className="wiz-input"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder="invite link or code"
+          style={{boxShadow: '3px 3px 0 #0e0e0e', marginBottom: 14}}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+        />
+        {err && <div className="login-err" style={{marginBottom: 12}}>{err}</div>}
+        <div className="invite-btn-row">
+          <button className="invite-btn ghost" onClick={onClose}>CANCEL</button>
+          <button className="invite-btn primary" onClick={submit} disabled={busy || !val.trim()}>
+            {busy ? 'JOINING…' : 'JOIN ›'}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function InviteModal({ url, tripName, onClose, onToast }) {
   async function copy() {
     try {
@@ -4007,7 +4054,7 @@ function formatDateShort(iso) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).toLowerCase();
 }
 
-function HubScreen({ family, userFamily, activeTrip, pastTrips, expenses, online, onOpenTrip, onNewTrip, onSignOut }) {
+function HubScreen({ family, userFamily, activeTrip, pastTrips, expenses, online, onOpenTrip, onNewTrip, onJoinInvite, onSignOut }) {
   const isJoinedTrip = (t) => !!t && (!userFamily || t.family_id !== userFamily.id);
   const greeting = pickGreeting();
 
@@ -4047,9 +4094,10 @@ function HubScreen({ family, userFamily, activeTrip, pastTrips, expenses, online
           </div>
         )}
 
-        <button className="hub-newtrip" onClick={onNewTrip}>
-          + start a new trip
-        </button>
+        <div className="hub-actions">
+          <button className="hub-actionbtn" onClick={onNewTrip}>+ new trip</button>
+          <button className="hub-actionbtn" onClick={onJoinInvite}>join with code</button>
+        </div>
 
         {pastTrips.length > 0 && (
           <>
@@ -4101,6 +4149,7 @@ function App() {
   // Bootstrapped from Supabase. Empty members → onboarding. Empty trip → "no trip" screen.
   const [snapshotState, setSnapshotState] = useState({ family: null, userFamily: null, members: [], trip: null, pastTrips: [], participants: [] });
   const [inviteModal, setInviteModal] = useState(null); // { code, url, tripName } when generating
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [a2hsSeen, setA2hsSeen] = usePersistedState('dp.a2hs.seen', false);
   const [showA2hs, setShowA2hs] = useState(false);
 
@@ -4407,6 +4456,17 @@ function App() {
     }
   }
 
+  async function joinByCode(code) {
+    const { data, error } = await sb.rpc('accept_invite', { p_code: code });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    if (data?.self) { showToast("That's your own trip"); return; }
+    if (data?.already) { showToast('Already in that trip'); }
+    else { showToast('Joined trip'); }
+    await refreshAll();
+    setView('hub');
+  }
+
   async function endTrip() {
     if (!confirm('End this trip? You can start a new one right after. Past trip stays in your archive.')) return;
     try {
@@ -4451,6 +4511,7 @@ function App() {
           <div className="island" />
           <OnboardingScreen
             familyId={snapshotState.family.id}
+            userEmail={user.email}
             onComplete={async () => {
               await refreshAll();
               setView('hub');
@@ -4492,8 +4553,12 @@ function App() {
             online={online}
             onOpenTrip={() => setView('trip')}
             onNewTrip={() => setView('new-trip')}
+            onJoinInvite={() => setJoinModalOpen(true)}
             onSignOut={signOut}
           />
+          {joinModalOpen && (
+            <JoinInviteModal onJoin={joinByCode} onClose={() => setJoinModalOpen(false)} />
+          )}
           <div className="home-bar" />
           {toast && <div className="toast">{toast}</div>}
         </div>
