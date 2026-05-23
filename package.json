@@ -1,0 +1,9 @@
+{
+  "name": "dadpaid",
+  "version": "0.2.0",
+  "description": "Family travel expense tracker.",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}

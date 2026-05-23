@@ -1386,6 +1386,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script src="lib/helpers.js"></script>
 
 <script>
   // Register service worker — works on localhost and HTTPS.
@@ -1567,36 +1568,7 @@ function useAuth() {
   return { user, loading };
 }
 
-/* DB ↔ client field mapping (DB uses snake_case + _id suffixes). */
-function expenseFromDB(e) {
-  return {
-    id: e.id, date: e.date, preTrip: !!e.pre_trip,
-    payer: e.payer_id, card: e.card_id,
-    amount: e.amount, currency: e.currency,
-    title: e.title, category: e.category, split: e.split,
-    hasPhoto: !!e.has_photo, photoPath: e.photo_path,
-    ts: e.ts, synced: true,
-  };
-}
-function expenseToDB(e, tripId) {
-  return {
-    id: e.id, trip_id: tripId, date: e.date,
-    pre_trip: !!e.preTrip,
-    payer_id: e.payer, card_id: e.card || null,
-    amount: e.amount, currency: e.currency,
-    title: e.title || null, category: e.category || null,
-    split: e.split || 'everyone',
-    has_photo: !!(e.photo || e.hasPhoto),
-    photo_path: e.photoPath || null,
-    ts: e.ts || null,
-  };
-}
-function eventFromDB(v) {
-  return { id: v.id, date: v.date, time: v.time, title: v.title, tag: v.tag, done: !!v.done, synced: true };
-}
-function eventToDB(v, tripId) {
-  return { id: v.id, trip_id: tripId, date: v.date, time: v.time || null, title: v.title, tag: v.tag || null, done: !!v.done };
-}
+// DB ↔ client field mapping lives in lib/helpers.js (expenseFromDB, expenseToDB, eventFromDB, eventToDB).
 
 /* Loader: pulls family/members/cards/active trip/expenses/events/vault. */
 async function loadAll() {
@@ -1750,18 +1722,7 @@ const SPLIT_PRESETS = [
   { id: 'just-me',  label: 'JUST PAYER', sub: 'No split, payer covers it' },
 ];
 
-function initialFor(name) {
-  const t = name.trim();
-  return (t[0] || '?').toUpperCase();
-}
-
-function uid(prefix = '') {
-  // Globally unique IDs — works across families without collisions.
-  const raw = (typeof crypto !== 'undefined' && crypto.randomUUID)
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  return prefix ? `${prefix}_${raw}` : raw;
-}
+// initialFor and uid live in lib/helpers.js.
 
 /* Step 1 of onboarding: family name + members */
 function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
@@ -2511,55 +2472,12 @@ const CATEGORIES = ['Food', 'Travel', 'Hotel', 'Shopping', 'Activity', 'Tickets'
    HELPERS
    ════════════════════════════════════════════════════════════════════ */
 
-function fmtMajor(integerMinor, currency) {
-  const n = Math.abs(integerMinor);
-  const major = Math.floor(n / 100);
-  if (currency === 'INR') {
-    const s = major.toString();
-    if (s.length <= 3) return s;
-    const last3 = s.slice(-3);
-    const rest = s.slice(0, -3);
-    return rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
-  }
-  return major.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-function fmtMinor(integerMinor) { return (Math.abs(integerMinor) % 100).toString().padStart(2, '0'); }
-function symbol(c) { return c === 'INR' ? '₹' : '£'; }
-
-function fmtFull(minorAmount, currency, opts = {}) {
-  const sym = symbol(currency);
-  const maj = fmtMajor(minorAmount, currency);
-  const min = fmtMinor(minorAmount);
-  if (opts.compact && min === '00') return `${sym}${maj}`;
-  return `${sym}${maj}.${min}`;
-}
-
-function dayLabel(dateStr, currentDateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const today = new Date(currentDateStr + 'T00:00:00');
-  const diff = Math.round((today - d) / 86400000);
-  if (diff === 0) return 'TODAY';
-  if (diff === 1) return 'YESTERDAY';
-  return d.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase() + ' ' + d.getDate();
-}
-
-function memberOf(id) { return FAMILY.members.find(m => m.id === id); }
-function cardsOf(payerId) { return FAMILY.cards.filter(c => c.owner === payerId); }
-function cardOf(cardId) { return FAMILY.cards.find(c => c.id === cardId); }
-
-function totalFor(expenses, opts = {}) {
-  let total = 0;
-  for (const e of expenses) {
-    if (opts.currency && e.currency !== opts.currency) continue;
-    if (opts.payer && e.payer !== opts.payer) continue;
-    if (opts.category && e.category !== opts.category) continue;
-    if (opts.preTrip === true && !e.preTrip) continue;
-    if (opts.preTrip === false && e.preTrip) continue;
-    if (opts.date && e.date !== opts.date) continue;
-    total += e.amount;
-  }
-  return total;
-}
+// fmtMajor, fmtMinor, symbol, fmtFull, dayLabel, totalFor, distinctCurrencies
+// all live in lib/helpers.js. memberOf/cardOf/cardsOf wrap the helpers using
+// the mutable FAMILY module-global so existing component code can stay terse.
+function memberOf(id)        { return memberOfIn(FAMILY, id); }
+function cardsOf(payerId)    { return cardsOfIn(FAMILY, payerId); }
+function cardOf(cardId)      { return cardOfIn(FAMILY, cardId); }
 
 /* ════════════════════════════════════════════════════════════════════
    PRIMITIVES
@@ -2658,25 +2576,34 @@ const SPLIT_OPTIONS = [
 
 function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onHome }) {
   const [amount, setAmount] = useState('');           // raw string: "12" or "12.5" or "12.50"
-  const [currency, setCurrency] = useState('GBP');
+  const tripCurrency = (TRIP.currencies && TRIP.currencies[0]) || 'GBP';
+  const [currency, setCurrency] = useState(tripCurrency);
   const [category, setCategory] = useState('Food');
-  const [payer, setPayer] = useState('ketan');
-  const [card, setCard] = useState('hdfc');
-  const [split, setSplit] = useState(TRIP.defaultSplit);
+  // Default payer and card from the actual family, not hardcoded slugs.
+  const defaultPayer = FAMILY.members[0]?.id || '';
+  const defaultCard = cardsOf(defaultPayer)[0]?.id || '';
+  const [payer, setPayer] = useState(defaultPayer);
+  const [card, setCard] = useState(defaultCard);
+  const [split, setSplit] = useState(TRIP.defaultSplit || 'everyone');
   const [splitOpen, setSplitOpen] = useState(false);
   const [photo, setPhoto] = useState(null); // dataURL string
   const fileRef = useRef(null);
 
+  // If family loads after this screen mounts, snap into a real payer/card.
+  useEffect(() => {
+    if (!payer && FAMILY.members[0]) setPayer(FAMILY.members[0].id);
+  }, [FAMILY.members.length]);
+
   // payer change → pick first card for that payer
   useEffect(() => {
     const cards = cardsOf(payer);
-    if (!cards.find(c => c.id === card)) setCard(cards[0]?.id);
+    if (!cards.find(c => c.id === card)) setCard(cards[0]?.id || '');
   }, [payer]);
 
   const cardObj = cardOf(card);
   const minorAmount = Math.round(parseFloat(amount || '0') * 100);
   const isZero = minorAmount === 0;
-  const todayTotal = totalFor(expenses, { date: todayDate, currency: 'GBP' });
+  const todayTotal = totalFor(expenses, { date: todayDate, currency: tripCurrency });
 
   // parse display parts
   const [majorStr, decStr] = amount.split('.');
@@ -2729,6 +2656,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onH
 
   function submit() {
     if (isZero) return;
+    if (!payer) { onToast('Pick a payer first'); return; }
     const now = Date.now();
     const e = {
       id: 'e' + now,
@@ -2744,7 +2672,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onH
     };
     onAdd(e);
     const m = memberOf(payer);
-    onToast(`+ ${fmtFull(minorAmount, currency)} · ${m.name}`);
+    onToast(`+ ${fmtFull(minorAmount, currency)} · ${m?.name || 'unknown'}`);
     setAmount('');
     setPhoto(null);
   }
@@ -2753,7 +2681,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onH
     <>
       <Header
         title="DAD PAID"
-        sub={`${TRIP.shortName} · ${fmtFull(todayTotal, 'GBP')} so far today`}
+        sub={`${TRIP.shortName} · ${fmtFull(todayTotal, tripCurrency)} so far today`}
         right={`D ${TRIP.currentDay} / ${TRIP.totalDays}`}
         onGear={onGear}
         onHome={onHome}
@@ -2889,15 +2817,18 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onH
    LEDGER (Timeline)
    ════════════════════════════════════════════════════════════════════ */
 
-function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto, onOpenEdit }) {
-  const [filter, setFilter] = useState('all'); // all | mine | gbp | inr
+function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto, onOpenEdit, myMemberId }) {
+  const [filter, setFilter] = useState('all'); // all | mine | <currency>
+  const tripCurrency = (TRIP.currencies && TRIP.currencies[0]) || 'GBP';
+  const presentCurrencies = useMemo(() => distinctCurrencies(expenses), [expenses]);
+
   const filtered = useMemo(() => {
     return expenses.filter(e => {
-      if (filter === 'gbp' && e.currency !== 'GBP') return false;
-      if (filter === 'inr' && e.currency !== 'INR') return false;
+      if (filter === 'mine') return e.payer === myMemberId;
+      if (filter !== 'all') return e.currency === filter;       // 'GBP' | 'INR' | ...
       return true;
     });
-  }, [expenses, filter]);
+  }, [expenses, filter, myMemberId]);
 
   const preTrip = filtered.filter(e => e.preTrip);
   const inTrip  = filtered.filter(e => !e.preTrip);
@@ -2916,7 +2847,12 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
     }));
   }, [inTrip]);
 
-  const totalAll = totalFor(filtered, { currency: 'GBP' });
+  // Display the trip's primary currency total; show parenthetical other-currency
+  // totals when the trip has mixed currencies.
+  function bandTotal(rows) {
+    const cur = filter !== 'all' && filter !== 'mine' ? filter : tripCurrency;
+    return fmtFull(totalFor(rows, { currency: cur }), cur, { compact: true });
+  }
 
   return (
     <>
@@ -2932,8 +2868,14 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
 
       <div className="body">
         <div className="led-filters">
-          {[['all','ALL'],['mine','MINE'],['gbp','£ GBP'],['inr','₹ INR']].map(([id, lbl]) => (
-            <button key={id} className={`led-filter ${filter === id ? 'active' : ''}`} onClick={() => setFilter(id)}>{lbl}</button>
+          <button className={`led-filter ${filter === 'all'  ? 'active' : ''}`} onClick={() => setFilter('all')}>ALL</button>
+          <button className={`led-filter ${filter === 'mine' ? 'active' : ''}`} onClick={() => setFilter('mine')}>MINE</button>
+          {presentCurrencies.slice(0, 2).map((c) => (
+            <button
+              key={c}
+              className={`led-filter ${filter === c ? 'active' : ''}`}
+              onClick={() => setFilter(c)}
+            >{symbol(c)} {c}</button>
           ))}
         </div>
 
@@ -2953,7 +2895,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
                 <div className="lbl">BEFORE TRIP</div>
                 <div className="sub">Hotels · flights · advance</div>
               </div>
-              <div className="total">{fmtFull(totalFor(preTrip, { currency: 'GBP' }), 'GBP', { compact: true })}</div>
+              <div className="total">{bandTotal(preTrip)}</div>
             </div>
             {preTrip.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} onOpenEdit={onOpenEdit} />)}
           </>
@@ -2961,7 +2903,6 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
 
         {/* By day */}
         {byDate.map(({ date, items }) => {
-          const dt = totalFor(items, { currency: 'GBP' });
           return (
             <div key={date}>
               <div className={`led-day-band ${date !== todayDate ? 'dim' : ''}`}>
@@ -2969,7 +2910,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
                   <div className="lbl">{dayLabel(date, todayDate)}</div>
                   <div className="sub">{date}</div>
                 </div>
-                <div className="total">{fmtFull(dt, 'GBP', { compact: true })}</div>
+                <div className="total">{bandTotal(items)}</div>
               </div>
               {items.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} onOpenEdit={onOpenEdit} />)}
             </div>
@@ -2977,7 +2918,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
         })}
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
-          end of ledger · trip total {fmtFull(totalAll, 'GBP')}
+          end of ledger · trip total {bandTotal(filtered)}
         </div>
       </div>
     </>
@@ -2989,6 +2930,9 @@ function LedgerRow({ e, onOpenPhoto, onOpenEdit }) {
   const fresh = e.ts && (Date.now() - e.ts < 2000);
   const unsynced = e.synced === false;
   const hasPhoto = e.hasPhoto || e.photo;
+  const memberName = (m?.name || 'Unknown').toUpperCase();
+  const categoryLabel = (e.category || 'Other').toUpperCase();
+  const cardLast4 = cardOf(e.card)?.last4;
   return (
     <div
       className={`led-row ${fresh ? 'fresh' : ''} ${unsynced ? 'led-row-unsynced' : ''}`}
@@ -2997,7 +2941,7 @@ function LedgerRow({ e, onOpenPhoto, onOpenEdit }) {
       <Avatar id={e.payer} />
       <div style={{flex: 1, minWidth: 0}}>
         <div className="led-row-title">
-          {e.title}
+          {e.title || categoryLabel}
           {hasPhoto && (
             <button
               className="led-photo-badge"
@@ -3006,7 +2950,7 @@ function LedgerRow({ e, onOpenPhoto, onOpenEdit }) {
           )}
         </div>
         <div className="led-row-sub">
-          {m.name.toUpperCase()} · {e.category.toUpperCase()}{cardOf(e.card)?.last4 ? ' · ' + cardOf(e.card).last4 : ''}
+          {memberName} · {categoryLabel}{cardLast4 ? ' · ' + cardLast4 : ''}
           {unsynced && <span style={{marginLeft:6, color:'#c0392b', fontWeight:700, letterSpacing:'0.08em'}}>· OFFLINE</span>}
         </div>
       </div>
@@ -3053,40 +2997,53 @@ function PhotoLightbox({ expense, onClose }) {
    ════════════════════════════════════════════════════════════════════ */
 
 function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
-  const gbp = totalFor(expenses, { currency: 'GBP' });
-  const inr = totalFor(expenses, { currency: 'INR' });
+  const presentCurrencies = useMemo(() => {
+    const set = distinctCurrencies(expenses);
+    if (set.length === 0 && TRIP.currencies?.[0]) set.push(TRIP.currencies[0]);
+    return set;
+  }, [expenses]);
 
-  // by category (combined display, separate amounts per currency)
+  const totalsByCurrency = useMemo(() => {
+    return presentCurrencies.map((c) => ({ currency: c, total: totalFor(expenses, { currency: c }) }));
+  }, [expenses, presentCurrencies]);
+
+  // by category — keyed map[cat][currency] = amount (any currency, not just GBP/INR)
   const byCat = useMemo(() => {
     const map = {};
     for (const e of expenses) {
-      if (!map[e.category]) map[e.category] = { GBP: 0, INR: 0 };
-      map[e.category][e.currency] += e.amount;
+      const cat = e.category || 'Other';
+      if (!map[cat]) map[cat] = {};
+      const cur = e.currency || 'GBP';
+      map[cat][cur] = (map[cat][cur] || 0) + e.amount;
     }
-    const totalCat = Object.values(map).reduce((s, v) => s + v.GBP + v.INR, 0);
     return Object.entries(map)
-      .map(([cat, v]) => ({ cat, ...v, total: v.GBP + v.INR }))
+      .map(([cat, v]) => ({ cat, byCur: v, total: Object.values(v).reduce((s, n) => s + n, 0) }))
       .sort((a, b) => b.total - a.total);
   }, [expenses]);
 
   const byPerson = useMemo(() => {
     return FAMILY.members.map(m => {
-      const gbp = totalFor(expenses, { payer: m.id, currency: 'GBP' });
-      const inr = totalFor(expenses, { payer: m.id, currency: 'INR' });
-      return { id: m.id, name: m.name, gbp, inr, total: gbp + inr };
+      const byCur = {};
+      for (const c of presentCurrencies) byCur[c] = totalFor(expenses, { payer: m.id, currency: c });
+      const total = Object.values(byCur).reduce((s, n) => s + n, 0);
+      return { id: m.id, name: m.name, byCur, total };
     }).sort((a, b) => b.total - a.total);
-  }, [expenses]);
+  }, [expenses, presentCurrencies]);
 
   const maxCat = Math.max(...byCat.map(c => c.total), 1);
   const maxPerson = Math.max(...byPerson.map(p => p.total), 1);
 
   const CAT_ICONS = { Food:'🍴', Travel:'🚂', Hotel:'🛏', Shopping:'🛍', Activity:'🎟', Tickets:'🎫', Groceries:'🧺', Other:'•' };
 
+  const subDates = TRIP.startDate && TRIP.endDate
+    ? `${formatDateShort(TRIP.startDate)} to ${formatDateShort(TRIP.endDate)}`.toUpperCase()
+    : '';
+
   return (
     <>
       <Header
         title="SUMMARY"
-        sub={`${TRIP.shortName} · 15–22 DEC 2025`}
+        sub={`${TRIP.shortName}${subDates ? ' · ' + subDates : ''}`}
         right={`D ${TRIP.currentDay}`}
         rightSub={`/ ${TRIP.totalDays}`}
         onGear={onGear}
@@ -3103,18 +3060,15 @@ function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
           />
         ) : (
         <>
-        {/* TOTALS */}
-        <div className="sum-totals">
-          <div className="sum-total primary">
-            <div className="lbl">GBP SPEND</div>
-            <div className="amt">£{fmtMajor(gbp, 'GBP')}</div>
-            <div className="meta">{gbp === 0 ? '·' : 'incl. flights + hotel'}</div>
-          </div>
-          <div className="sum-total">
-            <div className="lbl">INR SPEND</div>
-            <div className="amt">₹{fmtMajor(inr, 'INR')}</div>
-            <div className="meta">{inr === 0 ? 'No INR yet' : 'Pre-departure'}</div>
-          </div>
+        {/* TOTALS — one tile per currency present in the trip */}
+        <div className="sum-totals" style={{gridTemplateColumns: `repeat(${Math.max(1, totalsByCurrency.length)}, 1fr)`}}>
+          {totalsByCurrency.map((t, i) => (
+            <div key={t.currency} className={`sum-total ${i === 0 ? 'primary' : ''}`}>
+              <div className="lbl">{t.currency} SPEND</div>
+              <div className="amt">{symbol(t.currency)}{fmtMajor(t.total, t.currency)}</div>
+              <div className="meta">{t.total === 0 ? '·' : `${expenses.filter((e) => e.currency === t.currency).length} entries`}</div>
+            </div>
+          ))}
         </div>
 
         {/* BY CATEGORY */}
@@ -3122,47 +3076,58 @@ function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
           <span>BY CATEGORY</span>
           <span>SORTED</span>
         </div>
-        {byCat.map(c => (
-          <div key={c.cat} className="sum-cat-row">
-            <div className="sum-cat-head">
-              <div className="sum-cat-name">{CAT_ICONS[c.cat]} {c.cat}</div>
-              <div className="sum-cat-amt">
-                {c.GBP > 0 && <span>£{fmtMajor(c.GBP, 'GBP')}</span>}
-                {c.GBP > 0 && c.INR > 0 && <span> + </span>}
-                {c.INR > 0 && <span>₹{fmtMajor(c.INR, 'INR')}</span>}
+        {byCat.map(c => {
+          const curs = Object.keys(c.byCur);
+          return (
+            <div key={c.cat} className="sum-cat-row">
+              <div className="sum-cat-head">
+                <div className="sum-cat-name">{CAT_ICONS[c.cat] || '•'} {c.cat}</div>
+                <div className="sum-cat-amt">
+                  {curs.map((cur, ix) => (
+                    <span key={cur}>
+                      {ix > 0 && ' + '}
+                      {symbol(cur)}{fmtMajor(c.byCur[cur], cur)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="sum-bar">
+                <div className="sum-bar-fill gbp" style={{width: (c.total / maxCat * 100) + '%'}} />
               </div>
             </div>
-            <div className="sum-bar">
-              <div className="sum-bar-fill gbp" style={{width: (c.GBP / maxCat * 100) + '%'}} />
-              <div className="sum-bar-fill inr" style={{width: (c.INR / maxCat * 100) + '%'}} />
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* WHO PAID */}
         <div className="section-band-dark">
           <span>WHO PAID</span>
           <span>BY PERSON</span>
         </div>
-        {byPerson.map(p => (
-          <div key={p.id} className="sum-who-row">
-            <Avatar id={p.id} />
-            <div className="sum-who-bar-wrap">
-              <div className="sum-who-head">
-                <div className="sum-who-name">{p.name}</div>
-                <div className="sum-cat-amt">
-                  {p.gbp > 0 && <span>£{fmtMajor(p.gbp, 'GBP')}</span>}
-                  {p.gbp > 0 && p.inr > 0 && <span> · </span>}
-                  {p.inr > 0 && <span>₹{fmtMajor(p.inr, 'INR')}</span>}
+        {byPerson.map(p => {
+          const curs = Object.keys(p.byCur).filter((c) => p.byCur[c] > 0);
+          return (
+            <div key={p.id} className="sum-who-row">
+              <Avatar id={p.id} />
+              <div className="sum-who-bar-wrap">
+                <div className="sum-who-head">
+                  <div className="sum-who-name">{p.name}</div>
+                  <div className="sum-cat-amt">
+                    {curs.length === 0 && <span style={{color: 'rgba(14,14,14,0.4)'}}>—</span>}
+                    {curs.map((cur, ix) => (
+                      <span key={cur}>
+                        {ix > 0 && ' · '}
+                        {symbol(cur)}{fmtMajor(p.byCur[cur], cur)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="sum-bar">
+                  <div className="sum-bar-fill gbp" style={{width: (p.total / maxPerson * 100) + '%'}} />
                 </div>
               </div>
-              <div className="sum-bar">
-                <div className="sum-bar-fill gbp" style={{width: (p.gbp / maxPerson * 100) + '%'}} />
-                <div className="sum-bar-fill inr" style={{width: (p.inr / maxPerson * 100) + '%'}} />
-              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* SETTLEMENT PEEK */}
         <div className="section-band-dark">
@@ -3182,50 +3147,10 @@ function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
 }
 
 function Settlement({ expenses }) {
-  // Compute net per person per currency assuming default split per expense.
-  // Simplified: split rule on each expense — defaults to 'everyone'.
-  const SPLIT_BENEFICIARIES = {
-    'everyone': ['ami','sahil','ketan'],
-    'parents':  ['ami','ketan'],
-    'dad':      ['ketan'],
-    'just-me':  null, // payer only
-  };
-
-  function settleFor(currency) {
-    const net = { ami: 0, sahil: 0, ketan: 0 }; // positive = owed to them
-    for (const e of expenses) {
-      if (e.currency !== currency) continue;
-      const splitId = e.split || 'everyone';
-      const benefs = SPLIT_BENEFICIARIES[splitId] || [e.payer];
-      const perHead = e.amount / benefs.length;
-      net[e.payer] += e.amount;
-      for (const b of benefs) net[b] -= perHead;
-    }
-    // turn into transfers using min-cash-flow simplified greedy
-    const debtors = [];
-    const creditors = [];
-    for (const id of Object.keys(net)) {
-      if (net[id] < -1) debtors.push({ id, v: -net[id] });
-      else if (net[id] > 1) creditors.push({ id, v: net[id] });
-    }
-    debtors.sort((a, b) => b.v - a.v);
-    creditors.sort((a, b) => b.v - a.v);
-    const transfers = [];
-    let i = 0, j = 0;
-    while (i < debtors.length && j < creditors.length) {
-      const amt = Math.min(debtors[i].v, creditors[j].v);
-      transfers.push({ from: debtors[i].id, to: creditors[j].id, amount: amt });
-      debtors[i].v -= amt;
-      creditors[j].v -= amt;
-      if (debtors[i].v < 1) i++;
-      if (creditors[j].v < 1) j++;
-    }
-    return transfers;
-  }
-
-  const gbpT = settleFor('GBP');
-  const inrT = settleFor('INR');
-  const all = [...gbpT.map(t => ({...t, currency:'GBP'})), ...inrT.map(t => ({...t, currency:'INR'}))];
+  // Pure settlement logic lives in lib/helpers.js (`settleTrip`).
+  // It uses the actual family members (UUIDs), not legacy slugs, and handles
+  // every currency present in the expense set, not just GBP+INR.
+  const all = settleTrip(expenses, FAMILY.members);
 
   if (all.length === 0) {
     return (
@@ -3241,12 +3166,12 @@ function Settlement({ expenses }) {
         <div key={idx} className="row">
           <Avatar id={t.from} />
           <div style={{flex: 1, fontSize: 13, fontWeight: 600}}>
-            <span style={{fontWeight: 700}}>{memberOf(t.from).name}</span>
+            <span style={{fontWeight: 700}}>{memberOf(t.from)?.name || 'Someone'}</span>
             <span style={{color:'rgba(14,14,14,0.5)'}}> owes </span>
-            <span style={{fontWeight: 700}}>{memberOf(t.to).name}</span>
+            <span style={{fontWeight: 700}}>{memberOf(t.to)?.name || 'Someone'}</span>
           </div>
           <div className="led-row-amt" style={{color:'#c0392b'}}>
-            {symbol(t.currency)}{fmtMajor(Math.round(t.amount), t.currency)}<span className="dec">.{fmtMinor(Math.round(t.amount))}</span>
+            {symbol(t.currency)}{fmtMajor(t.amount, t.currency)}<span className="dec">.{fmtMinor(t.amount)}</span>
           </div>
         </div>
       ))}
@@ -3544,43 +3469,51 @@ function SettingsScreen({ expenses, online, pendingCount, userEmail, participant
    ════════════════════════════════════════════════════════════════════ */
 
 function TripWrapScreen({ expenses, onBack, onToast }) {
-  const total = totalFor(expenses, { currency: 'GBP' });
+  const tripCurrency = (TRIP.currencies && TRIP.currencies[0]) || 'GBP';
+  const total = totalFor(expenses, { currency: tripCurrency });
   const inTrip = expenses.filter(e => !e.preTrip);
   const preTrip = expenses.filter(e => e.preTrip);
-  const days = TRIP.totalDays;
-  const avgPerDay = inTrip.length ? Math.round(totalFor(inTrip, { currency:'GBP' }) / days) : 0;
+  const days = TRIP.totalDays || 1;
+  const avgPerDay = inTrip.length ? Math.round(totalFor(inTrip, { currency: tripCurrency }) / days) : 0;
 
-  // top category
+  // top category — count across all currencies (assumes parity for "popular")
   const catTotals = {};
   for (const e of expenses) {
-    if (e.currency !== 'GBP') continue;
-    catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
+    const cat = e.category || 'Other';
+    catTotals[cat] = (catTotals[cat] || 0) + e.amount;
   }
-  const topCat = Object.entries(catTotals).sort((a,b) => b[1] - a[1])[0];
+  const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
 
-  // biggest spender
-  const personTotals = FAMILY.members.map(m => ({ id: m.id, name: m.name, paid: totalFor(expenses, { payer: m.id, currency: 'GBP' }) }))
-    .sort((a,b) => b.paid - a.paid);
+  // biggest spender — by trip's primary currency
+  const personTotals = FAMILY.members.map(m => ({
+    id: m.id, name: m.name,
+    initial: m.initial || initialFor(m.name),
+    paid: totalFor(expenses, { payer: m.id, currency: tripCurrency }),
+  })).sort((a, b) => b.paid - a.paid);
+
+  const dateRange = TRIP.startDate && TRIP.endDate
+    ? `${formatDateShort(TRIP.startDate)} to ${formatDateShort(TRIP.endDate)}`.toUpperCase()
+    : '';
 
   return (
     <>
-      <Header title="TRIP WRAP" sub={`${TRIP.name} · 15–22 DEC 2025`} onBack={onBack} />
+      <Header title="TRIP WRAP" sub={`${TRIP.name}${dateRange ? ' · ' + dateRange : ''}`} onBack={onBack} />
       <div className="body">
         <div className="wrap-hero">
           <div className="wrap-hero-label">TOTAL SPENT</div>
-          <div className="wrap-hero-amt">£{fmtMajor(total, 'GBP')}</div>
-          <div className="wrap-hero-sub">over {days} days · {expenses.length} expenses</div>
+          <div className="wrap-hero-amt">{symbol(tripCurrency)}{fmtMajor(total, tripCurrency)}</div>
+          <div className="wrap-hero-sub">over {days} day{days === 1 ? '' : 's'} · {expenses.length} expense{expenses.length === 1 ? '' : 's'}</div>
         </div>
 
         <div className="wrap-block">
           <div className="lbl">BY THE NUMBERS</div>
           <div className="wrap-stat-row">
             <div className="wrap-stat">
-              <div className="v">£{fmtMajor(avgPerDay, 'GBP')}</div>
+              <div className="v">{symbol(tripCurrency)}{fmtMajor(avgPerDay, tripCurrency)}</div>
               <div className="k">per day</div>
             </div>
             <div className="wrap-stat">
-              <div className="v">£{fmtMajor(totalFor(preTrip, { currency:'GBP' }), 'GBP')}</div>
+              <div className="v">{symbol(tripCurrency)}{fmtMajor(totalFor(preTrip, { currency: tripCurrency }), tripCurrency)}</div>
               <div className="k">pre-trip</div>
             </div>
             <div className="wrap-stat">
@@ -3593,11 +3526,11 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
         <div className="section-band-dark"><span>WHO PAID MOST</span></div>
         {personTotals.map((p, i) => (
           <div key={p.id} className="wrap-settle-row">
-            <div className="ava">{memberOf(p.id).initial}</div>
+            <Avatar id={p.id} />
             <div style={{flex:1, fontSize:14, fontWeight:600}}>
-              {p.name}{i === 0 && <span style={{marginLeft: 8, fontSize: 10, color:'#c0392b', fontWeight:700, letterSpacing:'0.1em'}}>★ MOST</span>}
+              {p.name}{i === 0 && personTotals[0].paid > 0 && <span style={{marginLeft: 8, fontSize: 10, color:'#c0392b', fontWeight:700, letterSpacing:'0.1em'}}>★ MOST</span>}
             </div>
-            <div className="led-row-amt">£{fmtMajor(p.paid, 'GBP')}<span className="dec">.{fmtMinor(p.paid)}</span></div>
+            <div className="led-row-amt">{symbol(tripCurrency)}{fmtMajor(p.paid, tripCurrency)}<span className="dec">.{fmtMinor(p.paid)}</span></div>
           </div>
         ))}
 
@@ -4050,20 +3983,7 @@ function EditCardSheet({ card, onSave, onDelete, onClose }) {
    HUB (landing dashboard)
    ════════════════════════════════════════════════════════════════════ */
 
-function pickGreeting() {
-  const h = new Date().getHours();
-  if (h < 6)  return "logging expenses after midnight. dedicated of you.";
-  if (h < 12) return "morning. someone's buying breakfast.";
-  if (h < 17) return "afternoon. small charges add up.";
-  if (h < 21) return "evening. dinner round, probably.";
-  return "late. someone's still adding up the tube card.";
-}
-
-function formatDateShort(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }).toLowerCase();
-}
+// pickGreeting and formatDateShort live in lib/helpers.js.
 
 function HubScreen({ family, userFamily, activeTrip, pastTrips, expenses, online, onOpenTrip, onNewTrip, onJoinInvite, onSignOut }) {
   const isJoinedTrip = (t) => !!t && (!userFamily || t.family_id !== userFamily.id);
@@ -4183,6 +4103,18 @@ function App() {
 
   const [toast, setToast] = useState(null);
   const todayDate = new Date().toISOString().slice(0, 10);
+  // Which family_member represents the signed-in user in the current trip?
+  // For the owner family it's their first member. For joined trips it's the
+  // member created in accept_invite, looked up via trip_participants.
+  const myMemberId = useMemo(() => {
+    if (!user) return null;
+    const myPart = (snapshotState.participants || []).find((p) => p.user_id === user.id);
+    if (myPart?.member_id) return myPart.member_id;
+    if (snapshotState.userFamily && snapshotState.family && snapshotState.userFamily.id === snapshotState.family.id) {
+      return snapshotState.members?.[0]?.id || null;
+    }
+    return null;
+  }, [user, snapshotState]);
 
   function showToast(msg) {
     setToast(msg);
@@ -4613,7 +4545,7 @@ function App() {
         <div className="island" />
         <div className="screen">
           {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} onAdd={addExpense} onToast={showToast} onGear={openSettings} onHome={() => setView('hub')} />}
-          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} />}
+          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} myMemberId={myMemberId} />}
           {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} />}
           {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onHome={() => setView('hub')} onEditEvent={setEditEvent} />}
           {overlay === 'settings' && <SettingsScreen

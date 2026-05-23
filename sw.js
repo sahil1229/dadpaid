@@ -1,11 +1,17 @@
 // dadpaid service worker — offline shell cache
-const CACHE = 'dadpaid-v1';
+const CACHE = 'dadpaid-v2';
 
 const SHELL = [
   './',
   './index.html',
+  './lib/helpers.js',
+  './manifest.json',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png',
   'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
+  'https://unpkg.com/@supabase/supabase-js@2',
   'https://unpkg.com/@babel/standalone@7.29.0/babel.min.js',
   'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Funnel+Display:wght@600;700;800;900&family=Funnel+Sans:wght@400;500;600;700&display=swap',
 ];
