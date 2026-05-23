@@ -757,6 +757,108 @@
   .wiz-btn.ghost { background: transparent; color: #0e0e0e; flex: 0 0 auto; padding: 14px 18px; }
   .wiz-btn.ghost:active { background: #f1ecdf; }
 
+  /* ──────────────── DEMO MODE BANNER (feature 1) ──────────────── */
+  .demo-banner {
+    position: absolute; top: 0; left: 0; right: 0;
+    background: #c0392b; color: #fffaf0;
+    padding: max(8px, env(safe-area-inset-top)) 16px 8px;
+    z-index: 70;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+  }
+  .demo-banner .signin {
+    background: #fffaf0; color: #0e0e0e;
+    border: 2px solid #0e0e0e;
+    padding: 6px 12px; border-radius: 4px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .demo-banner .signin:active { transform: translate(1px, 1px); }
+
+  /* When the demo banner is up, push the header down so it doesn't overlap. */
+  .phone.with-demo .header { padding-top: 60px; }
+
+  /* ──────────────── SEARCH (feature 4) ──────────────── */
+  .led-search {
+    padding: 10px 16px;
+    background: #f1ecdf;
+    border-bottom: 2px solid #0e0e0e;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .led-search input {
+    flex: 1;
+    background: #fffaf0;
+    border: 2px solid #0e0e0e;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    box-shadow: 2px 2px 0 #0e0e0e;
+  }
+  .led-search-x {
+    width: 28px; height: 28px;
+    background: transparent;
+    border: 2px solid #0e0e0e;
+    border-radius: 4px;
+    font-size: 16px; font-weight: 800;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .led-search-x:active { background: #f1ecdf; }
+  .led-search-toggle {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(233,196,75,0.7);
+    background: transparent; border: none;
+    cursor: pointer;
+  }
+  .led-search-toggle:active { color: #e9c44b; }
+
+  /* ──────────────── SYNC DOT (feature 5) ──────────────── */
+  .h-sync {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: rgba(255,250,240,0.55);
+    font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .h-sync .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #3ba982;
+    box-shadow: 0 0 0 2px rgba(59,169,130,0.25);
+    animation: syncPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes syncPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(59,169,130,0.25); }
+    50%      { box-shadow: 0 0 0 5px rgba(59,169,130,0.10); }
+  }
+
+  /* ──────────────── SETTLEMENT ACTIONS (feature 3) ──────────────── */
+  .settle-row-action {
+    background: #e9c44b; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    box-shadow: 2px 2px 0 #0e0e0e;
+    cursor: pointer;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+  .settle-row-action:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 #0e0e0e; }
+  .settle-history-row {
+    padding: 10px 22px;
+    background: #f1ecdf;
+    border-bottom: 1.5px solid rgba(14,14,14,0.07);
+    display: flex; align-items: center; gap: 12px;
+    opacity: 0.85;
+  }
+  .settle-history-row .meta {
+    font-size: 11px; color: rgba(14,14,14,0.55); margin-top: 2px;
+  }
+
   /* ──────────────── HUB (landing page) ──────────────── */
   .hub-stage {
     width: 100%; height: 100%;
@@ -1599,13 +1701,14 @@ async function loadAll() {
   const tripFamily = tfams?.[0] || userFamily;
 
   // 5. Members + cards for the trip family.
-  const [{ data: members }, { data: cards }, { data: exps }, { data: evs }, { data: vlt }, { data: parts }] = await Promise.all([
+  const [{ data: members }, { data: cards }, { data: exps }, { data: evs }, { data: vlt }, { data: parts }, { data: sets }] = await Promise.all([
     sb.from('family_members').select('*').eq('family_id', active.family_id).order('position'),
     sb.from('family_cards').select('*').eq('family_id', active.family_id).order('position'),
     sb.from('expenses').select('*').eq('trip_id', active.id).order('date', { ascending: false }),
     sb.from('events').select('*').eq('trip_id', active.id).order('time'),
     sb.from('vault_items').select('*').eq('trip_id', active.id),
     sb.from('trip_participants').select('user_id, member_id, role').eq('trip_id', active.id),
+    sb.from('settlements').select('*').eq('trip_id', active.id).order('settled_at', { ascending: false }),
   ]);
 
   return {
@@ -1614,6 +1717,7 @@ async function loadAll() {
     trip: active, pastTrips: trips.filter((t) => t.status === 'ended'),
     expenses: exps || [], events: evs || [], vault: vlt || [],
     participants: parts || [],
+    settlements: sets || [],
   };
 }
 
@@ -2438,7 +2542,7 @@ function Avatar({ id, size = 'sm', selected = false }) {
   );
 }
 
-function Header({ title, sub, right, rightSub, onGear, onBack, onHome, offline }) {
+function Header({ title, sub, right, rightSub, onGear, onBack, onHome, offline, extraLeft, syncLive }) {
   return (
     <div className="header">
       {onBack && (
@@ -2454,6 +2558,9 @@ function Header({ title, sub, right, rightSub, onGear, onBack, onHome, offline }
           {offline && (
             <div className="h-offline"><span className="pulse" />OFFLINE</div>
           )}
+          {!offline && syncLive && (
+            <div className="h-sync"><span className="dot" /> LIVE</div>
+          )}
         </div>
         {right && (
           <div style={{display:'flex', alignItems:'flex-start', gap: 6}}>
@@ -2461,6 +2568,7 @@ function Header({ title, sub, right, rightSub, onGear, onBack, onHome, offline }
               <div className="h-right">{right}</div>
               {rightSub && <div className="h-right-sub">{rightSub}</div>}
             </div>
+            {extraLeft}
             {onHome && (
               <button className="h-home" onClick={onHome} aria-label="home">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -2508,7 +2616,7 @@ const SPLIT_OPTIONS = [
   { id: 'just-me',  label: 'JUST PAYER', sub: 'Personal · not shared' },
 ];
 
-function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onHome }) {
+function KeypadScreen({ expenses, todayDate, online, syncLive, onAdd, onToast, onGear, onHome }) {
   const [amount, setAmount] = useState('');           // raw string: "12" or "12.5" or "12.50"
   const tripCurrency = (TRIP.currencies && TRIP.currencies[0]) || 'GBP';
   const [currency, setCurrency] = useState(tripCurrency);
@@ -2620,6 +2728,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onH
         onGear={onGear}
         onHome={onHome}
         offline={!online}
+        syncLive={syncLive}
       />
 
       <div className="kp-body">
@@ -2751,18 +2860,25 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear, onH
    LEDGER (Timeline)
    ════════════════════════════════════════════════════════════════════ */
 
-function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto, onOpenEdit, myMemberId }) {
+function LedgerScreen({ expenses, todayDate, online, syncLive, onGear, onHome, onOpenPhoto, onOpenEdit, myMemberId }) {
   const [filter, setFilter] = useState('all'); // all | mine | <currency>
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const tripCurrency = (TRIP.currencies && TRIP.currencies[0]) || 'GBP';
   const presentCurrencies = useMemo(() => distinctCurrencies(expenses), [expenses]);
 
   const filtered = useMemo(() => {
-    return expenses.filter(e => {
+    let base = expenses.filter(e => {
       if (filter === 'mine') return e.payer === myMemberId;
-      if (filter !== 'all') return e.currency === filter;       // 'GBP' | 'INR' | ...
+      if (filter !== 'all') return e.currency === filter;
       return true;
     });
-  }, [expenses, filter, myMemberId]);
+    if (query.trim()) {
+      const nameById = Object.fromEntries(FAMILY.members.map((m) => [m.id, m.name]));
+      base = filterExpenses(base, query, nameById);
+    }
+    return base;
+  }, [expenses, filter, myMemberId, query]);
 
   const preTrip = filtered.filter(e => e.preTrip);
   const inTrip  = filtered.filter(e => !e.preTrip);
@@ -2798,7 +2914,34 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onHome, onOpenPhoto
         onGear={onGear}
         onHome={onHome}
         offline={!online}
+        extraLeft={
+          <button
+            className="led-search-toggle"
+            onClick={() => setSearchOpen(!searchOpen)}
+            aria-label="search"
+            style={{marginRight: 4}}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+        }
       />
+      {searchOpen && (
+        <div className="led-search">
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="search expenses, payer, amount, category"
+          />
+          <button
+            className="led-search-x"
+            onClick={() => { setQuery(''); setSearchOpen(false); }}
+            aria-label="close search"
+          >×</button>
+        </div>
+      )}
 
       <div className="body">
         <div className="led-filters">
@@ -2930,7 +3073,7 @@ function PhotoLightbox({ expense, onClose }) {
    SUMMARY (Dashboard)
    ════════════════════════════════════════════════════════════════════ */
 
-function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
+function SummaryScreen({ expenses, settlements, todayDate, online, syncLive, onGear, onHome, onMarkSettled, onUndoSettlement }) {
   const presentCurrencies = useMemo(() => {
     const set = distinctCurrencies(expenses);
     if (set.length === 0 && TRIP.currencies?.[0]) set.push(TRIP.currencies[0]);
@@ -2983,6 +3126,7 @@ function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
         onGear={onGear}
         onHome={onHome}
         offline={!online}
+        syncLive={syncLive}
       />
 
       <div className="body">
@@ -3066,9 +3210,14 @@ function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
         {/* SETTLEMENT PEEK */}
         <div className="section-band-dark">
           <span>SETTLEMENT</span>
-          <span>AT TRIP END</span>
+          <span>{settlements?.length ? 'WITH HISTORY' : 'AT TRIP END'}</span>
         </div>
-        <Settlement expenses={expenses} />
+        <Settlement
+          expenses={expenses}
+          settlements={settlements}
+          onMarkSettled={onMarkSettled}
+          onUndoSettlement={onUndoSettlement}
+        />
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
           settlement locks when trip ends
@@ -3080,35 +3229,124 @@ function SummaryScreen({ expenses, todayDate, online, onGear, onHome }) {
   );
 }
 
-function Settlement({ expenses }) {
-  // Pure settlement logic lives in lib/helpers.js (`settleTrip`).
-  // It uses the actual family members (UUIDs), not legacy slugs, and handles
-  // every currency present in the expense set, not just GBP+INR.
-  const all = settleTrip(expenses, FAMILY.members);
+function MarkSettledModal({ transfer, onConfirm, onClose }) {
+  const [method, setMethod] = useState('Cash');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (!transfer) return null;
+  const methods = ['Cash', 'UPI', 'Bank', 'Venmo', 'Other'];
 
-  if (all.length === 0) {
-    return (
-      <div className="row" style={{justifyContent:'center', color:'rgba(14,14,14,0.5)', fontSize:13, fontWeight:600, fontStyle:'italic'}}>
-        Everyone's even. Suspicious.
-      </div>
-    );
+  async function confirm() {
+    setBusy(true);
+    try { await onConfirm({ ...transfer, method, note: note.trim() || null }); }
+    finally { setBusy(false); }
   }
 
   return (
     <>
-      {all.map((t, idx) => (
-        <div key={idx} className="row">
-          <Avatar id={t.from} />
-          <div style={{flex: 1, fontSize: 13, fontWeight: 600}}>
-            <span style={{fontWeight: 700}}>{memberOf(t.from)?.name || 'Someone'}</span>
-            <span style={{color:'rgba(14,14,14,0.5)'}}> owes </span>
-            <span style={{fontWeight: 700}}>{memberOf(t.to)?.name || 'Someone'}</span>
-          </div>
-          <div className="led-row-amt" style={{color:'#c0392b'}}>
-            {symbol(t.currency)}{fmtMajor(t.amount, t.currency)}<span className="dec">.{fmtMinor(t.amount)}</span>
-          </div>
+      <div className="backdrop" onClick={onClose} />
+      <div className="invite-modal">
+        <div className="invite-title">MARK SETTLED</div>
+        <div className="invite-sub">
+          <strong>{memberOf(transfer.from)?.name || 'Someone'}</strong> paid <strong>{memberOf(transfer.to)?.name || 'Someone'}</strong>{' '}
+          {symbol(transfer.currency)}{fmtMajor(transfer.amount, transfer.currency)}.{fmtMinor(transfer.amount)}
         </div>
-      ))}
+
+        <div className="wiz-label">How?</div>
+        <div className="wiz-select-row" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
+          {methods.map((m) => (
+            <div key={m} className={`wiz-radio ${method === m ? 'active' : ''}`} onClick={() => setMethod(m)}>{m}</div>
+          ))}
+        </div>
+
+        <div className="wiz-label">Note (optional)</div>
+        <input
+          className="wiz-input"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="e.g. paid at dinner"
+          style={{boxShadow: '3px 3px 0 #0e0e0e'}}
+        />
+
+        <div className="invite-btn-row" style={{marginTop: 16}}>
+          <button className="invite-btn ghost" onClick={onClose}>CANCEL</button>
+          <button className="invite-btn primary" onClick={confirm} disabled={busy}>
+            {busy ? 'SAVING…' : 'CONFIRM ›'}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Settlement({ expenses, settlements, onMarkSettled, onUndoSettlement, readonly }) {
+  // settleTrip respects priorSettlements: gross debts minus already-paid offsets.
+  const all = settleTrip(expenses, FAMILY.members, {
+    priorSettlements: (settlements || []).map((s) => ({
+      from: s.from_member_id, to: s.to_member_id, amount: s.amount, currency: s.currency,
+    })),
+  });
+
+  return (
+    <>
+      {all.length === 0 ? (
+        <div className="row" style={{justifyContent:'center', color:'rgba(14,14,14,0.5)', fontSize:13, fontWeight:600, fontStyle:'italic'}}>
+          {settlements?.length ? 'All settled. Nice.' : "Everyone's even. Suspicious."}
+        </div>
+      ) : (
+        all.map((t, idx) => (
+          <div key={idx} className="row">
+            <Avatar id={t.from} />
+            <div style={{flex: 1, fontSize: 13, fontWeight: 600, minWidth: 0}}>
+              <span style={{fontWeight: 700}}>{memberOf(t.from)?.name || 'Someone'}</span>
+              <span style={{color:'rgba(14,14,14,0.5)'}}> owes </span>
+              <span style={{fontWeight: 700}}>{memberOf(t.to)?.name || 'Someone'}</span>
+            </div>
+            <div className="led-row-amt" style={{color:'#c0392b'}}>
+              {symbol(t.currency)}{fmtMajor(t.amount, t.currency)}<span className="dec">.{fmtMinor(t.amount)}</span>
+            </div>
+            {!readonly && onMarkSettled && (
+              <button className="settle-row-action" onClick={() => onMarkSettled(t)}>SETTLE</button>
+            )}
+          </div>
+        ))
+      )}
+
+      {settlements && settlements.length > 0 && (
+        <>
+          <div className="section-band-dark" style={{marginTop: 8}}>
+            <span>HISTORY</span>
+            <span>{settlements.length} SETTLED</span>
+          </div>
+          {settlements.slice().sort((a, b) => (b.settled_at || '').localeCompare(a.settled_at || '')).map((s) => (
+            <div key={s.id} className="settle-history-row">
+              <Avatar id={s.from_member_id} />
+              <div style={{flex: 1, fontSize: 12, fontWeight: 500, minWidth: 0}}>
+                <div>
+                  <strong>{memberOf(s.from_member_id)?.name || 'Someone'}</strong>
+                  <span style={{color:'rgba(14,14,14,0.5)'}}> paid </span>
+                  <strong>{memberOf(s.to_member_id)?.name || 'Someone'}</strong>
+                </div>
+                <div className="meta">
+                  {s.method || 'Cash'}
+                  {s.settled_at ? ' · ' + formatDateShort(s.settled_at.slice(0, 10)) : ''}
+                  {s.note ? ' · ' + s.note : ''}
+                </div>
+              </div>
+              <div style={{fontSize: 12, fontWeight: 700, fontFamily: 'IBM Plex Mono'}}>
+                {symbol(s.currency)}{fmtMajor(s.amount, s.currency)}
+              </div>
+              {!readonly && onUndoSettlement && (
+                <button
+                  className="settle-row-action"
+                  style={{background: 'transparent', borderColor: 'rgba(14,14,14,0.3)', color: 'rgba(14,14,14,0.5)'}}
+                  onClick={() => onUndoSettlement(s)}
+                >UNDO</button>
+              )}
+            </div>
+          ))}
+        </>
+      )}
     </>
   );
 }
@@ -3117,7 +3355,7 @@ function Settlement({ expenses }) {
    TOMORROW (Events + Vault)
    ════════════════════════════════════════════════════════════════════ */
 
-function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGear, onHome, onEditEvent }) {
+function TomorrowScreen({ events, vault, online, syncLive, onToggleEvent, onAddEvent, onGear, onHome, onEditEvent }) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('10:00');
@@ -3145,6 +3383,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
         onGear={onGear}
         onHome={onHome}
         offline={!online}
+        syncLive={syncLive}
       />
 
       <div className="body">
@@ -3402,7 +3641,7 @@ function SettingsScreen({ expenses, online, pendingCount, userEmail, participant
    TRIP WRAP
    ════════════════════════════════════════════════════════════════════ */
 
-function TripWrapScreen({ expenses, onBack, onToast }) {
+function TripWrapScreen({ expenses, settlements, onBack, onToast }) {
   const tripCurrency = (TRIP.currencies && TRIP.currencies[0]) || 'GBP';
   const total = totalFor(expenses, { currency: tripCurrency });
   const inTrip = expenses.filter(e => !e.preTrip);
@@ -3469,7 +3708,7 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
         ))}
 
         <div className="section-band-dark"><span>FINAL SETTLEMENT</span><span>LOCKED</span></div>
-        <Settlement expenses={expenses} />
+        <Settlement expenses={expenses} settlements={settlements} readonly />
 
         <div style={{padding: '18px 22px', display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12}}>
           <button className="cta" onClick={() => onToast('Share image coming soon')}>SHARE</button>
@@ -4031,12 +4270,29 @@ function App() {
   const [expenses, setExpenses] = usePersistedState('dp.expenses', []);
   const [events,   setEvents]   = usePersistedState('dp.events',   []);
   const [vault,    setVault]    = usePersistedState('dp.vault',    []);
+  const [settlements, setSettlements] = usePersistedState('dp.settlements', []);
+  const [pendingSettle, setPendingSettle] = useState(null); // active transfer to mark settled
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const [demoActive, setDemoActive] = useState(false);
+  const [demoDismissed, setDemoDismissed] = useState(false);
 
   // Pending-ops queue — every mutation is appended; drained when online + authed.
   const [pendingOps, setPendingOps] = usePersistedState('dp.pending', []);
 
   const [toast, setToast] = useState(null);
   const todayDate = new Date().toISOString().slice(0, 10);
+  // Re-evaluate sync state periodically so the "LIVE" dot fades to nothing
+  // after the 30s window without forcing every render to chase a moving clock.
+  const [syncTick, setSyncTick] = useState(0);
+  useEffect(() => {
+    if (!online || !lastSyncedAt) return;
+    const t = setInterval(() => setSyncTick((n) => n + 1), 5000);
+    return () => clearInterval(t);
+  }, [online, lastSyncedAt]);
+  const syncLive = syncStatus(Date.now(), lastSyncedAt, online) === 'live';
+  // (syncTick is read implicitly via Date.now() inside the line above)
+  void syncTick;
+
   // Which family_member represents the signed-in user in the current trip?
   // For the owner family it's their first member. For joined trips it's the
   // member created in accept_invite, looked up via trip_participants.
@@ -4079,6 +4335,8 @@ function App() {
       setExpenses(snap.expenses.map(expenseFromDB));
       setEvents(snap.events.map(eventFromDB));
       setVault(snap.vault.map((v) => ({ id: v.id, name: v.name, meta: v.meta || '' })));
+      setSettlements(snap.settlements || []);
+      setLastSyncedAt(Date.now());
       if (snap.trip) {
         const startMs = new Date(snap.trip.start_date).getTime();
         const todayMs = new Date(todayDate).getTime();
@@ -4220,15 +4478,17 @@ function App() {
 
   function addExpense(e) {
     const { photo, ...rest } = e;
-    const record = { ...rest, hasPhoto: !!photo, synced: false };
-    if (photo) putPhoto(e.id, photo); // local IDB so photo viewer works immediately
+    const record = { ...rest, hasPhoto: !!photo, synced: demoActive ? true : false };
+    if (photo) putPhoto(e.id, photo);
     setExpenses((prev) => [...prev, record]);
+    if (demoActive) return;  // sandbox mode: don't persist to Supabase
     enqueue({ type: 'expense.insert', payload: expenseToDB(record, TRIP.id), photoDataUrl: photo || null });
   }
 
   function addEvent(v) {
-    const record = { ...v, synced: false };
+    const record = { ...v, synced: demoActive ? true : false };
     setEvents((prev) => [...prev, record].sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+    if (demoActive) return;
     enqueue({ type: 'event.insert', payload: eventToDB(record, TRIP.id) });
   }
 
@@ -4338,6 +4598,33 @@ function App() {
     }
   }
 
+  async function markSettled(transfer) {
+    if (!TRIP.id) return;
+    const row = {
+      trip_id: TRIP.id,
+      from_member_id: transfer.from,
+      to_member_id: transfer.to,
+      amount: transfer.amount,
+      currency: transfer.currency,
+      method: transfer.method || 'Cash',
+      note: transfer.note || null,
+    };
+    const { data, error } = await sb.from('settlements').insert(row).select().single();
+    if (error) { showToast('Could not record: ' + error.message); return; }
+    setSettlements((prev) => [data, ...prev]);
+    setLastSyncedAt(Date.now());
+    setPendingSettle(null);
+    showToast('Settled');
+  }
+  async function undoSettlement(s) {
+    if (!confirm('Undo this settlement? The debt comes back into the outstanding list.')) return;
+    const { error } = await sb.from('settlements').delete().eq('id', s.id);
+    if (error) { showToast('Could not undo: ' + error.message); return; }
+    setSettlements((prev) => prev.filter((x) => x.id !== s.id));
+    setLastSyncedAt(Date.now());
+    showToast('Settlement removed');
+  }
+
   async function joinByCode(code) {
     const { data, error } = await sb.rpc('accept_invite', { p_code: code });
     if (error) throw new Error(error.message);
@@ -4374,11 +4661,39 @@ function App() {
     showToast('Signed out');
   }
 
+  /* ── DEMO MODE — unauthenticated visitors get a sample trip ───────── */
+  useEffect(() => {
+    if (user) { setDemoActive(false); return; }
+    if (demoDismissed) { setDemoActive(false); return; }
+    if (authLoading) return;
+    // Inject the demo snapshot
+    const snap = buildDemoSnapshot();
+    applyServerSnapshot(snap);
+    setSnapshotState({
+      family: snap.family,
+      userFamily: snap.family,
+      members: snap.members,
+      trip: snap.trip,
+      pastTrips: [],
+      participants: [],
+    });
+    setExpenses(snap.expenses.map(expenseFromDB));
+    setEvents([]);
+    setVault([]);
+    setSettlements([]);
+    setDemoActive(true);
+    setView('trip');
+    setTab('add');
+    setBootDone(true);
+    forceRender();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, demoDismissed, authLoading]);
+
   /* ── RENDER GATES ────────────────────────────────────────────────── */
   if (authLoading) {
     return <div className="stage"><div className="phone"><div className="island" /><div className="boot"><div className="boot-dot" /></div></div></div>;
   }
-  if (!user) {
+  if (!user && demoDismissed) {
     return <div className="stage"><div className="phone"><div className="island" /><LoginScreen /></div></div>;
   }
   if (!bootDone) {
@@ -4475,13 +4790,19 @@ function App() {
 
   return (
     <div className="stage">
-      <div className="phone">
+      <div className={`phone ${demoActive ? 'with-demo' : ''}`}>
         <div className="island" />
+        {demoActive && (
+          <div className="demo-banner">
+            <span>SAMPLE DATA · tap around, nothing saves</span>
+            <button className="signin" onClick={() => setDemoDismissed(true)}>SIGN IN</button>
+          </div>
+        )}
         <div className="screen">
-          {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} onAdd={addExpense} onToast={showToast} onGear={openSettings} onHome={() => setView('hub')} />}
-          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} myMemberId={myMemberId} />}
-          {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onHome={() => setView('hub')} />}
-          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onHome={() => setView('hub')} onEditEvent={setEditEvent} />}
+          {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} syncLive={syncLive} onAdd={addExpense} onToast={showToast} onGear={openSettings} onHome={() => setView('hub')} />}
+          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} syncLive={syncLive} onGear={openSettings} onHome={() => setView('hub')} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} myMemberId={myMemberId} />}
+          {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} settlements={settlements} todayDate={todayDate} online={online} syncLive={syncLive} onGear={openSettings} onHome={() => setView('hub')} onMarkSettled={setPendingSettle} onUndoSettlement={undoSettlement} />}
+          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} syncLive={syncLive} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onHome={() => setView('hub')} onEditEvent={setEditEvent} />}
           {overlay === 'settings' && <SettingsScreen
             expenses={expenses}
             online={online}
@@ -4497,7 +4818,7 @@ function App() {
             onEditCard={setEditCard}
             onInvite={generateInvite}
           />}
-          {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeWrap} onToast={showToast} />}
+          {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} settlements={settlements} onBack={closeWrap} onToast={showToast} />}
           {!overlay && <BottomNav tab={tab} onTab={setTab} />}
         </div>
         <div className="home-bar" />
@@ -4508,6 +4829,7 @@ function App() {
         {editEvent && <EditEventSheet event={editEvent} onSave={updateEvent} onDelete={deleteEventLocal} onClose={() => setEditEvent(null)} />}
         {editMember !== null && <EditMemberSheet member={editMember.id ? editMember : null} allowDelete={FAMILY.members.length > 2} onSave={saveMember} onDelete={deleteMemberLocal} onClose={() => setEditMember(null)} />}
         {editCard !== null && <EditCardSheet card={editCard.id ? editCard : null} onSave={saveCard} onDelete={deleteCardLocal} onClose={() => setEditCard(null)} />}
+        {pendingSettle && <MarkSettledModal transfer={pendingSettle} onConfirm={markSettled} onClose={() => setPendingSettle(null)} />}
       </div>
       <div className="rotate-prompt" aria-hidden="true">
         <div className="glyph">↻</div>
