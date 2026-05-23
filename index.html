@@ -8,6 +8,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Funnel+Display:wght@600;700;800;900&family=Funnel+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Dad Paid" />
+<meta name="mobile-web-app-capable" content="yes" />
 <style>
   /* ─────────────────────────── BASE ─────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; }
@@ -750,6 +757,103 @@
   .wiz-btn.ghost { background: transparent; color: #0e0e0e; flex: 0 0 auto; padding: 14px 18px; }
   .wiz-btn.ghost:active { background: #f1ecdf; }
 
+  /* ──────────────── EDIT SHEET (full-screen) ──────────────── */
+  .edit-sheet {
+    position: absolute; inset: 0; z-index: 80;
+    background: #fffaf0;
+    display: flex; flex-direction: column;
+    animation: slideUp .26s cubic-bezier(.2,.7,.3,1);
+  }
+  .edit-head {
+    background: #0e0e0e; color: #fffaf0;
+    padding: calc(env(safe-area-inset-top) + 10px) 18px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .edit-head .ttl {
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 18px;
+    color: #e9c44b; letter-spacing: 0.04em;
+  }
+  .edit-close {
+    background: transparent; border: none;
+    color: #e9c44b;
+    font-size: 22px; font-weight: 700; cursor: pointer;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .edit-body {
+    flex: 1; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px;
+  }
+  .edit-foot {
+    flex-shrink: 0; padding: 14px 18px max(18px, env(safe-area-inset-bottom));
+    border-top: 2px solid #0e0e0e;
+    background: #fffaf0;
+    display: flex; gap: 10px;
+  }
+  .edit-foot .save {
+    flex: 1;
+    background: #e9c44b; color: #0e0e0e;
+    border: 2px solid #0e0e0e; border-radius: 4px;
+    padding: 14px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    box-shadow: 4px 4px 0 #0e0e0e;
+    cursor: pointer;
+  }
+  .edit-foot .save:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 #0e0e0e; }
+  .edit-foot .save:disabled { opacity: 0.45; cursor: not-allowed; }
+  .edit-foot .del {
+    background: transparent; color: #c0392b;
+    border: 2px solid #c0392b; border-radius: 4px;
+    padding: 14px 16px;
+    font-family: 'Funnel Display'; font-weight: 800; font-size: 14px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .edit-foot .del:active { background: #c0392b; color: #fffaf0; }
+
+  /* color picker swatches */
+  .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swatch {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid #0e0e0e;
+    cursor: pointer;
+    transition: transform 0.06s, box-shadow 0.06s;
+  }
+  .swatch:active { transform: translate(1px, 1px); }
+  .swatch.selected { box-shadow: 3px 3px 0 #0e0e0e; }
+
+  /* settings inline action buttons */
+  .settings-row .row-edit {
+    background: transparent; border: 2px solid #0e0e0e;
+    width: 28px; height: 28px; border-radius: 4px;
+    font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .settings-row .row-edit:active { background: #f1ecdf; }
+  .settings-row .row-actions { display: flex; gap: 6px; }
+  .settings-row .row-del {
+    background: transparent; border: 2px solid #c0392b; color: #c0392b;
+    width: 28px; height: 28px; border-radius: 4px;
+    font-size: 14px; cursor: pointer; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .settings-row .row-del:active { background: #c0392b; color: #fffaf0; }
+
+  /* led-row needs cursor: pointer to hint at edit */
+  .led-row { cursor: pointer; }
+  .tom-event { cursor: pointer; }
+
+  /* avatar with photo */
+  .ava-img {
+    width: 100%; height: 100%; border-radius: 50%;
+    object-fit: cover;
+  }
+
   /* ──────────────── EMPTY STATE ──────────────── */
   .empty {
     flex: 1;
@@ -1187,7 +1291,10 @@ async function loadAll() {
 function applyServerSnapshot(snap) {
   FAMILY = {
     id: snap.family.id,
-    members: snap.members.map((m) => ({ id: m.id, name: m.name, initial: m.initial })),
+    members: snap.members.map((m) => ({
+      id: m.id, name: m.name, initial: m.initial,
+      color: m.color || '#e9c44b', avatarPath: m.avatar_path || null,
+    })),
     cards:   snap.cards.map((c)   => ({ id: c.id, owner: c.owner_member_id, nick: c.nick, last4: c.last4 || '' })),
   };
   if (snap.trip) {
@@ -1873,10 +1980,25 @@ function totalFor(expenses, opts = {}) {
    PRIMITIVES
    ════════════════════════════════════════════════════════════════════ */
 
+const MEMBER_COLORS = [
+  '#e9c44b', '#e8746a', '#3ba982', '#d6ad32',
+  '#d97ec9', '#5da9e6', '#8b9d3f', '#9c6df5',
+];
+
 function Avatar({ id, size = 'sm', selected = false }) {
   const m = memberOf(id);
-  const cls = `ava ${size === 'lg' ? 'ava-lg' : ''} ${!selected && size === 'lg' ? 'ava-outline' : ''}`;
-  return <div className={cls}>{m?.initial || '?'}</div>;
+  const color = m?.color || '#e9c44b';
+  const isLg = size === 'lg';
+
+  const style = isLg && !selected
+    ? { background: 'transparent', color: '#0e0e0e', border: `2px solid ${color}` }
+    : { background: color, color: '#0e0e0e' };
+
+  return (
+    <div className={`ava ${isLg ? 'ava-lg' : ''}`} style={style}>
+      {m?.initial || '?'}
+    </div>
+  );
 }
 
 function Header({ title, sub, right, rightSub, onGear, onBack, offline }) {
@@ -2176,7 +2298,7 @@ function KeypadScreen({ expenses, todayDate, online, onAdd, onToast, onGear }) {
    LEDGER (Timeline)
    ════════════════════════════════════════════════════════════════════ */
 
-function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto }) {
+function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto, onOpenEdit }) {
   const [filter, setFilter] = useState('all'); // all | mine | gbp | inr
   const filtered = useMemo(() => {
     return expenses.filter(e => {
@@ -2241,7 +2363,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto }) {
               </div>
               <div className="total">{fmtFull(totalFor(preTrip, { currency: 'GBP' }), 'GBP', { compact: true })}</div>
             </div>
-            {preTrip.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} />)}
+            {preTrip.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} onOpenEdit={onOpenEdit} />)}
           </>
         )}
 
@@ -2257,7 +2379,7 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto }) {
                 </div>
                 <div className="total">{fmtFull(dt, 'GBP', { compact: true })}</div>
               </div>
-              {items.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} />)}
+              {items.map(e => <LedgerRow key={e.id} e={e} onOpenPhoto={onOpenPhoto} onOpenEdit={onOpenEdit} />)}
             </div>
           );
         })}
@@ -2270,14 +2392,17 @@ function LedgerScreen({ expenses, todayDate, online, onGear, onOpenPhoto }) {
   );
 }
 
-function LedgerRow({ e, onOpenPhoto }) {
+function LedgerRow({ e, onOpenPhoto, onOpenEdit }) {
   const m = memberOf(e.payer);
   const fresh = e.ts && (Date.now() - e.ts < 2000);
   const unsynced = e.synced === false;
   const hasPhoto = e.hasPhoto || e.photo;
   return (
-    <div className={`led-row ${fresh ? 'fresh' : ''} ${unsynced ? 'led-row-unsynced' : ''}`}>
-      <div className="ava">{m.initial}</div>
+    <div
+      className={`led-row ${fresh ? 'fresh' : ''} ${unsynced ? 'led-row-unsynced' : ''}`}
+      onClick={() => onOpenEdit && onOpenEdit(e)}
+    >
+      <Avatar id={e.payer} />
       <div style={{flex: 1, minWidth: 0}}>
         <div className="led-row-title">
           {e.title}
@@ -2540,7 +2665,7 @@ function Settlement({ expenses }) {
    TOMORROW (Events + Vault)
    ════════════════════════════════════════════════════════════════════ */
 
-function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGear }) {
+function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGear, onEditEvent }) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('10:00');
@@ -2595,13 +2720,16 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
           />
         )}
         {events.map(e => (
-          <div key={e.id} className="tom-event">
+          <div key={e.id} className="tom-event" onClick={() => onEditEvent && onEditEvent(e)}>
             <div className="tom-event-time">{e.time}</div>
             <div className="tom-event-body">
               <div className="tom-event-title">{e.title}</div>
               {e.tag && <div className="tom-event-tag">{e.tag}</div>}
             </div>
-            <button className={`tom-check ${e.done ? 'done' : ''}`} onClick={() => onToggleEvent(e.id)}>
+            <button
+              className={`tom-check ${e.done ? 'done' : ''}`}
+              onClick={(ev) => { ev.stopPropagation(); onToggleEvent(e.id); }}
+            >
               {e.done && '✓'}
             </button>
           </div>
@@ -2665,7 +2793,7 @@ function TomorrowScreen({ events, vault, online, onToggleEvent, onAddEvent, onGe
    SETTINGS
    ════════════════════════════════════════════════════════════════════ */
 
-function SettingsScreen({ expenses, online, pendingCount, userEmail, onBack, onEndTrip, onToast, onSignOut }) {
+function SettingsScreen({ expenses, online, pendingCount, userEmail, onBack, onEndTrip, onToast, onSignOut, onEditMember, onEditCard }) {
   function exportCSV() {
     const headers = ['date','payer','card','amount','currency','title','category','split','preTrip'];
     const rows = expenses.map(e => [
@@ -2714,25 +2842,41 @@ function SettingsScreen({ expenses, online, pendingCount, userEmail, onBack, onE
 
         <div className="section-band-dark"><span>FAMILY</span><span>{FAMILY.members.length} MEMBERS</span></div>
         {FAMILY.members.map(m => (
-          <div key={m.id} className="row">
-            <Avatar id={m.id} />
-            <div style={{flex:1, fontSize: 14, fontWeight: 600}}>{m.name}</div>
-            <div style={{fontSize:11, color:'rgba(14,14,14,0.5)', fontWeight:600, letterSpacing:'0.06em'}}>
-              {cardsOf(m.id).filter(c => c.last4).length} CARDS
+          <div key={m.id} className="settings-row" onClick={() => onEditMember(m)}>
+            <div style={{display:'flex', alignItems:'center', gap:14, flex:1}}>
+              <Avatar id={m.id} />
+              <div style={{flex:1}}>
+                <div style={{fontSize:14, fontWeight:600}}>{m.name}</div>
+                <div style={{fontSize:11, color:'rgba(14,14,14,0.5)', marginTop:2}}>
+                  {cardsOf(m.id).filter(c => c.last4).length} card{cardsOf(m.id).filter(c => c.last4).length === 1 ? '' : 's'}
+                </div>
+              </div>
             </div>
+            <button className="row-edit" onClick={(e) => { e.stopPropagation(); onEditMember(m); }} aria-label="edit">›</button>
           </div>
         ))}
+        <div className="settings-action" onClick={() => onEditMember({})}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>ADD MEMBER</span>
+        </div>
 
-        <div className="section-band-dark"><span>CARDS</span><span>{FAMILY.cards.filter(c => c.last4).length} ACTIVE</span></div>
-        {FAMILY.cards.filter(c => c.last4).map(c => (
-          <div key={c.id} className="row">
-            <Avatar id={c.owner} />
-            <div style={{flex:1}}>
-              <div style={{fontSize:14, fontWeight:600}}>{c.nick}</div>
-              <div style={{fontSize:11, color:'rgba(14,14,14,0.5)', marginTop:2}}>{memberOf(c.owner).name} · ending {c.last4}</div>
+        <div className="section-band-dark"><span>CARDS</span><span>{FAMILY.cards.length} TOTAL</span></div>
+        {FAMILY.cards.map(c => (
+          <div key={c.id} className="settings-row" onClick={() => onEditCard(c)}>
+            <div style={{display:'flex', alignItems:'center', gap:14, flex:1}}>
+              <Avatar id={c.owner} />
+              <div style={{flex:1}}>
+                <div style={{fontSize:14, fontWeight:600}}>{c.nick}{c.last4 ? ' · ' + c.last4 : ''}</div>
+                <div style={{fontSize:11, color:'rgba(14,14,14,0.5)', marginTop:2}}>{memberOf(c.owner)?.name || 'Unknown'}</div>
+              </div>
             </div>
+            <button className="row-edit" onClick={(e) => { e.stopPropagation(); onEditCard(c); }} aria-label="edit">›</button>
           </div>
         ))}
+        <div className="settings-action" onClick={() => onEditCard({})}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>ADD CARD</span>
+        </div>
 
         <div className="section-band-dark"><span>ACCOUNT</span><span>{online ? 'ONLINE' : 'OFFLINE'}</span></div>
         <div className="settings-row">
@@ -2849,6 +2993,337 @@ function TripWrapScreen({ expenses, onBack, onToast }) {
 }
 
 /* ════════════════════════════════════════════════════════════════════
+   EDIT SHEETS  —  expense / event / member / card
+   ════════════════════════════════════════════════════════════════════ */
+
+function EditExpenseSheet({ expense, onSave, onDelete, onClose }) {
+  const initialMajor = (expense.amount / 100).toFixed(2);
+  const [amount, setAmount] = useState(initialMajor.replace(/\.?0+$/, '') || '0');
+  const [currency, setCurrency] = useState(expense.currency);
+  const [payer, setPayer] = useState(expense.payer);
+  const [card, setCard] = useState(expense.card || cardsOf(expense.payer)[0]?.id);
+  const [category, setCategory] = useState(expense.category || 'Food');
+  const [split, setSplit] = useState(expense.split || 'everyone');
+  const [date, setDate] = useState(expense.date);
+  const [title, setTitle] = useState(expense.title || '');
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const minorAmount = Math.round(parseFloat(amount || '0') * 100);
+  const isZero = minorAmount === 0;
+  const [majorStr, decStr] = amount.split('.');
+  const hasDot = amount.includes('.');
+  const majorDisplay = amount ? fmtMajor(parseInt(majorStr || '0', 10) * 100, currency) : '0';
+
+  function press(d) {
+    if (amount.length >= 12) return;
+    if (hasDot) {
+      const dec = amount.split('.')[1] || '';
+      if (dec.length >= 2) return;
+    }
+    if (amount === '0' && d !== '0') { setAmount(d); return; }
+    if (!amount && d === '0') { setAmount('0'); return; }
+    setAmount(amount + d);
+  }
+  function decimal() { if (!hasDot) setAmount((amount || '0') + '.'); }
+  function del() { setAmount(amount.slice(0, -1)); }
+
+  async function save() {
+    if (isZero) return;
+    setBusy(true);
+    try {
+      await onSave({
+        ...expense,
+        amount: minorAmount, currency, payer, card,
+        category, split, date, title: title.trim() || category,
+      });
+    } finally { setBusy(false); }
+  }
+
+  async function del_() {
+    if (!confirm('Delete this expense?')) return;
+    setBusy(true);
+    try { await onDelete(expense); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="edit-sheet">
+      <div className="edit-head">
+        <div className="ttl">EDIT EXPENSE</div>
+        <button className="edit-close" onClick={onClose} aria-label="close">×</button>
+      </div>
+
+      <div className="edit-body">
+        {/* AMOUNT */}
+        <div className="kp-top" style={{padding: 0, border: 'none', background: 'transparent'}}>
+          <div className={`kp-amount ${isZero ? 'zero' : ''}`} style={{justifyContent: 'center'}}>
+            <button
+              className="kp-sym-btn sym"
+              onClick={() => setCurrency(currency === 'GBP' ? 'INR' : 'GBP')}
+            >{symbol(currency)}</button>
+            <span>{majorDisplay}{hasDot && '.'}{decStr || ''}</span>
+          </div>
+        </div>
+
+        {/* CATEGORY scroll */}
+        <div className="kp-cats" style={{marginTop: 12, marginLeft: -18, marginRight: -18, paddingLeft: 18, paddingRight: 18}}>
+          {CATEGORIES.map((c) => (
+            <button key={c} className={`kp-cat ${category === c ? 'active' : ''}`} onClick={() => setCategory(c)}>
+              {c.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* TITLE */}
+        <div className="wiz-label">Title (optional)</div>
+        <input
+          className="wiz-input"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={category}
+        />
+
+        {/* PAYER */}
+        <div className="wiz-label">Payer</div>
+        <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
+          {FAMILY.members.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => { setPayer(m.id); const cs = cardsOf(m.id); setCard(cs[0]?.id); }}
+              style={{background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer'}}
+            >
+              <Avatar id={m.id} size="lg" selected={payer === m.id} />
+              <span style={{fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: payer === m.id ? '#0e0e0e' : 'rgba(14,14,14,0.5)'}}>{m.name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* CARD */}
+        <div className="wiz-label">Payment</div>
+        <div style={{display: 'flex', gap: 6, flexWrap: 'wrap'}}>
+          {cardsOf(payer).map((c) => (
+            <button key={c.id} className={`chip ${card === c.id ? 'chip-active' : ''}`} onClick={() => setCard(c.id)}>
+              {c.nick}{c.last4 ? ' ' + c.last4 : ''}
+            </button>
+          ))}
+        </div>
+
+        {/* SPLIT */}
+        <div className="wiz-label">Split</div>
+        <button className="chip chip-active" onClick={() => setSplitOpen(true)} style={{width: '100%', justifyContent: 'space-between'}}>
+          <span>SPLIT · {SPLIT_OPTIONS.find((o) => o.id === split)?.label || split.toUpperCase()}</span>
+          <span>▾</span>
+        </button>
+
+        {/* DATE */}
+        <div className="wiz-label">Date</div>
+        <input type="date" className="wiz-input" value={date} onChange={(e) => setDate(e.target.value)} />
+
+        {/* KEYPAD for editing amount */}
+        <div className="wiz-label">Amount keypad</div>
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 4}}>
+          {[1,2,3,4,5,6,7,8,9].map((n) => (
+            <button key={n} className="key" style={{minHeight: 44}} onClick={() => press(String(n))}>{n}</button>
+          ))}
+          <button className="key" style={{minHeight: 44}} onClick={decimal}>.</button>
+          <button className="key" style={{minHeight: 44}} onClick={() => press('0')}>0</button>
+          <button className="key" style={{minHeight: 44}} onClick={del}>⌫</button>
+        </div>
+      </div>
+
+      <div className="edit-foot">
+        <button className="del" onClick={del_} disabled={busy}>DELETE</button>
+        <button className="save" onClick={save} disabled={busy || isZero}>{busy ? 'SAVING…' : 'SAVE'}</button>
+      </div>
+
+      {splitOpen && (
+        <>
+          <div className="backdrop" onClick={() => setSplitOpen(false)} />
+          <div className="sheet">
+            <div className="sheet-title">SPLIT</div>
+            <div className="sheet-sub">Who's this for?</div>
+            {SPLIT_OPTIONS.map((o) => (
+              <div key={o.id} className={`sheet-opt ${split === o.id ? 'selected' : ''}`} onClick={() => { setSplit(o.id); setTimeout(() => setSplitOpen(false), 120); }}>
+                <div>
+                  <div className="sheet-opt-label">{o.label}</div>
+                  <div className="sheet-opt-sub">{o.sub}</div>
+                </div>
+                <div className="sheet-opt-mark">{split === o.id ? '✓' : ''}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function EditEventSheet({ event, onSave, onDelete, onClose }) {
+  const [title, setTitle] = useState(event.title || '');
+  const [time, setTime] = useState(event.time || '');
+  const [tag, setTag] = useState(event.tag || '');
+  const [done, setDone] = useState(!!event.done);
+  const [busy, setBusy] = useState(false);
+  const valid = title.trim().length > 0;
+
+  async function save() {
+    if (!valid) return;
+    setBusy(true);
+    try { await onSave({ ...event, title: title.trim(), time: time.trim() || null, tag: tag.trim() || null, done }); }
+    finally { setBusy(false); }
+  }
+  async function del_() {
+    if (!confirm('Delete this event?')) return;
+    setBusy(true);
+    try { await onDelete(event); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="edit-sheet">
+      <div className="edit-head">
+        <div className="ttl">EDIT EVENT</div>
+        <button className="edit-close" onClick={onClose} aria-label="close">×</button>
+      </div>
+      <div className="edit-body">
+        <div className="wiz-label">Title</div>
+        <input autoFocus className="wiz-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What's happening?" />
+
+        <div className="wiz-label">Time</div>
+        <input className="wiz-input" value={time} onChange={(e) => setTime(e.target.value)} placeholder="e.g. 19:00" style={{fontFamily: 'IBM Plex Mono', fontWeight: 700, maxWidth: 140}} />
+
+        <div className="wiz-label">Tag (optional)</div>
+        <input className="wiz-input" value={tag} onChange={(e) => setTag(e.target.value)} placeholder="e.g. BOOKED #84210 or TICKETS IN VAULT" />
+
+        <div className="wiz-label">Status</div>
+        <div className="wiz-select-row">
+          <div className={`wiz-radio ${!done ? 'active' : ''}`} onClick={() => setDone(false)}>UPCOMING</div>
+          <div className={`wiz-radio ${done ? 'active' : ''}`} onClick={() => setDone(true)}>DONE</div>
+        </div>
+      </div>
+      <div className="edit-foot">
+        <button className="del" onClick={del_} disabled={busy}>DELETE</button>
+        <button className="save" onClick={save} disabled={busy || !valid}>{busy ? 'SAVING…' : 'SAVE'}</button>
+      </div>
+    </div>
+  );
+}
+
+function EditMemberSheet({ member, onSave, onDelete, onClose, allowDelete }) {
+  const [name, setName] = useState(member?.name || '');
+  const [initial, setInitial] = useState(member?.initial || '');
+  const [color, setColor] = useState(member?.color || '#e9c44b');
+  const [busy, setBusy] = useState(false);
+  const valid = name.trim().length > 0;
+  const isNew = !member?.id;
+
+  async function save() {
+    if (!valid) return;
+    setBusy(true);
+    try { await onSave({ id: member?.id, name: name.trim(), initial: initial || initialFor(name), color }); }
+    finally { setBusy(false); }
+  }
+  async function del_() {
+    if (!confirm(`Remove ${member.name}? Their existing expenses will keep showing their name.`)) return;
+    setBusy(true);
+    try { await onDelete(member); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="edit-sheet">
+      <div className="edit-head">
+        <div className="ttl">{isNew ? 'ADD MEMBER' : 'EDIT MEMBER'}</div>
+        <button className="edit-close" onClick={onClose} aria-label="close">×</button>
+      </div>
+      <div className="edit-body">
+        <div className="wiz-label">Name</div>
+        <div className="wiz-member-row">
+          <div className="wiz-initial" style={{background: color, color: '#0e0e0e'}}>{initial || initialFor(name) || '?'}</div>
+          <input autoFocus className="wiz-input-sm" value={name} onChange={(e) => { setName(e.target.value); setInitial(initialFor(e.target.value)); }} placeholder="First name" />
+        </div>
+
+        <div className="wiz-label" style={{marginTop: 20}}>Color</div>
+        <div className="color-row">
+          {MEMBER_COLORS.map((c) => (
+            <div
+              key={c}
+              className={`swatch ${color === c ? 'selected' : ''}`}
+              style={{background: c}}
+              onClick={() => setColor(c)}
+              aria-label={`color ${c}`}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="edit-foot">
+        {!isNew && allowDelete && <button className="del" onClick={del_} disabled={busy}>REMOVE</button>}
+        <button className="save" onClick={save} disabled={busy || !valid}>{busy ? 'SAVING…' : (isNew ? 'ADD' : 'SAVE')}</button>
+      </div>
+    </div>
+  );
+}
+
+function EditCardSheet({ card, onSave, onDelete, onClose }) {
+  const [nick, setNick] = useState(card?.nick || '');
+  const [last4, setLast4] = useState(card?.last4 || '');
+  const [owner, setOwner] = useState(card?.owner || FAMILY.members[0]?.id || '');
+  const [busy, setBusy] = useState(false);
+  const valid = nick.trim().length > 0 && owner;
+  const isNew = !card?.id;
+
+  async function save() {
+    if (!valid) return;
+    setBusy(true);
+    try { await onSave({ id: card?.id, nick: nick.trim(), last4: last4.trim() || null, owner }); }
+    finally { setBusy(false); }
+  }
+  async function del_() {
+    if (!confirm(`Remove ${card.nick}? Existing expenses keep their card reference.`)) return;
+    setBusy(true);
+    try { await onDelete(card); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="edit-sheet">
+      <div className="edit-head">
+        <div className="ttl">{isNew ? 'ADD CARD' : 'EDIT CARD'}</div>
+        <button className="edit-close" onClick={onClose} aria-label="close">×</button>
+      </div>
+      <div className="edit-body">
+        <div className="wiz-label">Nickname</div>
+        <input autoFocus className="wiz-input" value={nick} onChange={(e) => setNick(e.target.value)} placeholder="e.g. HDFC Forex, Amex Plat" />
+
+        <div className="wiz-label">Last 4 digits (optional)</div>
+        <input
+          className="wiz-input"
+          value={last4}
+          onChange={(e) => setLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          placeholder="4521"
+          inputMode="numeric"
+          style={{maxWidth: 140}}
+        />
+
+        <div className="wiz-label">Owner</div>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6}}>
+          {FAMILY.members.map((m) => (
+            <div key={m.id} className={`wiz-radio ${owner === m.id ? 'active' : ''}`} onClick={() => setOwner(m.id)}>
+              {m.name.toUpperCase()}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="edit-foot">
+        {!isNew && <button className="del" onClick={del_} disabled={busy}>REMOVE</button>}
+        <button className="save" onClick={save} disabled={busy || !valid}>{busy ? 'SAVING…' : (isNew ? 'ADD' : 'SAVE')}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
    APP
    ════════════════════════════════════════════════════════════════════ */
 
@@ -2865,6 +3340,10 @@ function App() {
   const [tab, setTab] = useState('add');
   const [overlay, setOverlay] = useState(null);        // null | 'settings' | 'wrap'
   const [photoExpense, setPhotoExpense] = useState(null);
+  const [editExpense, setEditExpense] = useState(null);
+  const [editEvent, setEditEvent] = useState(null);
+  const [editMember, setEditMember] = useState(null);   // member object or { id: null } for new
+  const [editCard, setEditCard] = useState(null);
 
   // Offline-tolerant cache. Hydrates from localStorage instantly; replaced by server on load.
   const [expenses, setExpenses] = usePersistedState('dp.expenses', []);
@@ -2990,11 +3469,22 @@ function App() {
       case 'expense.insert': {
         const { error } = await sb.from('expenses').insert(op.payload);
         if (error) throw error;
-        // Storage upload if a photo was attached at insert time.
         if (op.photoDataUrl && FAMILY.id) {
           const path = await uploadPhotoFromDataUrl(op.photoDataUrl, FAMILY.id, op.payload.id);
           if (path) await sb.from('expenses').update({ has_photo: true, photo_path: path }).eq('id', op.payload.id);
         }
+        return;
+      }
+      case 'expense.update': {
+        const { id, ...patch } = op.payload;
+        const { error } = await sb.from('expenses').update(patch).eq('id', id);
+        if (error) throw error;
+        return;
+      }
+      case 'expense.delete': {
+        const { error } = await sb.from('expenses').delete().eq('id', op.id);
+        if (error) throw error;
+        if (op.photoPath) await sb.storage.from('photos').remove([op.photoPath]).catch(() => {});
         return;
       }
       case 'event.insert': {
@@ -3003,7 +3493,13 @@ function App() {
         return;
       }
       case 'event.update': {
-        const { error } = await sb.from('events').update(op.payload).eq('id', op.payload.id);
+        const { id, ...patch } = op.payload;
+        const { error } = await sb.from('events').update(patch).eq('id', id);
+        if (error) throw error;
+        return;
+      }
+      case 'event.delete': {
+        const { error } = await sb.from('events').delete().eq('id', op.id);
         if (error) throw error;
         return;
       }
@@ -3033,6 +3529,84 @@ function App() {
       return updated;
     }));
     if (updated) enqueue({ type: 'event.update', payload: { id, done: updated.done } });
+  }
+
+  function updateExpense(updated) {
+    setExpenses((prev) => prev.map((e) => e.id === updated.id ? { ...updated, synced: false } : e));
+    enqueue({ type: 'expense.update', payload: expenseToDB(updated, TRIP.id) });
+    setEditExpense(null);
+    showToast('Expense updated');
+  }
+  function deleteExpense(e) {
+    setExpenses((prev) => prev.filter((x) => x.id !== e.id));
+    enqueue({ type: 'expense.delete', id: e.id, photoPath: e.photoPath || null });
+    deletePhoto(e.id).catch(() => {});
+    setEditExpense(null);
+    showToast('Expense deleted');
+  }
+  function updateEvent(updated) {
+    setEvents((prev) => prev.map((e) => e.id === updated.id ? { ...updated, synced: false } : e)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+    enqueue({ type: 'event.update', payload: { id: updated.id, title: updated.title, time: updated.time, tag: updated.tag, done: updated.done } });
+    setEditEvent(null);
+    showToast('Event updated');
+  }
+  function deleteEventLocal(e) {
+    setEvents((prev) => prev.filter((x) => x.id !== e.id));
+    enqueue({ type: 'event.delete', id: e.id });
+    setEditEvent(null);
+    showToast('Event deleted');
+  }
+
+  // Family/card CRUD — direct Supabase calls (Settings is online-required).
+  async function saveMember(m) {
+    if (!FAMILY.id) return;
+    if (m.id) {
+      const { error } = await sb.from('family_members').update({ name: m.name, initial: m.initial, color: m.color }).eq('id', m.id);
+      if (error) { showToast('Save failed'); return; }
+    } else {
+      const newId = uid('mem');
+      const { error } = await sb.from('family_members').insert({
+        id: newId, family_id: FAMILY.id, name: m.name, initial: m.initial, color: m.color,
+        position: FAMILY.members.length,
+      });
+      if (error) { showToast('Add failed'); return; }
+    }
+    await refreshAll();
+    setEditMember(null);
+    showToast(m.id ? 'Member updated' : 'Member added');
+  }
+  async function deleteMemberLocal(m) {
+    if (FAMILY.members.length <= 2) { showToast('Need at least 2 members'); return; }
+    const { error } = await sb.from('family_members').delete().eq('id', m.id);
+    if (error) { showToast('Remove failed — they may have expenses'); return; }
+    await refreshAll();
+    setEditMember(null);
+    showToast('Member removed');
+  }
+  async function saveCard(c) {
+    if (!FAMILY.id) return;
+    if (c.id) {
+      const { error } = await sb.from('family_cards').update({ nick: c.nick, last4: c.last4, owner_member_id: c.owner }).eq('id', c.id);
+      if (error) { showToast('Save failed'); return; }
+    } else {
+      const { error } = await sb.from('family_cards').insert({
+        id: uid('card'), family_id: FAMILY.id,
+        owner_member_id: c.owner, nick: c.nick, last4: c.last4,
+        position: FAMILY.cards.length,
+      });
+      if (error) { showToast('Add failed'); return; }
+    }
+    await refreshAll();
+    setEditCard(null);
+    showToast(c.id ? 'Card updated' : 'Card added');
+  }
+  async function deleteCardLocal(c) {
+    const { error } = await sb.from('family_cards').delete().eq('id', c.id);
+    if (error) { showToast('Remove failed'); return; }
+    await refreshAll();
+    setEditCard(null);
+    showToast('Card removed');
   }
 
   const openSettings = () => setOverlay('settings');
@@ -3097,16 +3671,20 @@ function App() {
         <div className="island" />
         <div className="screen">
           {!overlay && tab === 'add'     && <KeypadScreen   expenses={expenses} todayDate={todayDate} online={online} onAdd={addExpense} onToast={showToast} onGear={openSettings} />}
-          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onOpenPhoto={setPhotoExpense} />}
+          {!overlay && tab === 'log'     && <LedgerScreen   expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} onOpenPhoto={setPhotoExpense} onOpenEdit={setEditExpense} />}
           {!overlay && tab === 'summary' && <SummaryScreen  expenses={expenses} todayDate={todayDate} online={online} onGear={openSettings} />}
-          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} />}
-          {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} pendingCount={pendingOps.length} userEmail={user.email} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onSignOut={signOut} />}
+          {!overlay && tab === 'next'    && <TomorrowScreen events={events} vault={vault} online={online} onToggleEvent={toggleEvent} onAddEvent={addEvent} onGear={openSettings} onEditEvent={setEditEvent} />}
+          {overlay === 'settings' && <SettingsScreen expenses={expenses} online={online} pendingCount={pendingOps.length} userEmail={user.email} onBack={closeOverlay} onEndTrip={endTrip} onToast={showToast} onSignOut={signOut} onEditMember={setEditMember} onEditCard={setEditCard} />}
           {overlay === 'wrap'     && <TripWrapScreen expenses={expenses} onBack={closeOverlay} onToast={showToast} />}
           {!overlay && <BottomNav tab={tab} onTab={setTab} />}
         </div>
         <div className="home-bar" />
         {toast && <div className="toast">{toast}</div>}
         {photoExpense && <PhotoLightbox expense={photoExpense} onClose={() => setPhotoExpense(null)} />}
+        {editExpense && <EditExpenseSheet expense={editExpense} onSave={updateExpense} onDelete={deleteExpense} onClose={() => setEditExpense(null)} />}
+        {editEvent && <EditEventSheet event={editEvent} onSave={updateEvent} onDelete={deleteEventLocal} onClose={() => setEditEvent(null)} />}
+        {editMember !== null && <EditMemberSheet member={editMember.id ? editMember : null} allowDelete={FAMILY.members.length > 2} onSave={saveMember} onDelete={deleteMemberLocal} onClose={() => setEditMember(null)} />}
+        {editCard !== null && <EditCardSheet card={editCard.id ? editCard : null} onSave={saveCard} onDelete={deleteCardLocal} onClose={() => setEditCard(null)} />}
       </div>
       <div className="rotate-prompt" aria-hidden="true">
         <div className="glyph">↻</div>
