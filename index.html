@@ -2158,7 +2158,11 @@ function OnboardingScreen({ familyId, userEmail, onComplete, onSignOut }) {
 }
 
 /* Standalone "new trip" wizard — for when family exists but no active trip. */
-function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut, cancelLabel = 'sign out instead' }) {
+function NoTripScreen({ familyId, members, pastTrips, onComplete, onSignOut, cancelLabel = 'sign out instead' }) {
+  // Defensive defaults — these have caused crashes when state was mid-transition.
+  const memberCount = (members && members.length) || 0;
+  const safePastTrips = pastTrips || [];
+
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const weekOut = new Date(today.getTime() + 7 * 86400000).toISOString().slice(0, 10);
@@ -2171,11 +2175,15 @@ function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut
   const [defaultSplit, setDefaultSplit] = useState('everyone');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const submitLock = useRef(false);
 
-  const canFinish = tripName.trim().length > 0 && startDate <= endDate;
+  const canFinish = !!familyId && tripName.trim().length > 0 && startDate <= endDate;
 
   async function finish() {
+    if (submitLock.current) return;
     if (!canFinish) return;
+    if (!familyId) { setErr('No family loaded. Sign out and back in.'); return; }
+    submitLock.current = true;
     setBusy(true); setErr(null);
     try {
       const { error } = await sb.from('trips').insert({
@@ -2188,7 +2196,7 @@ function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut
       if (error) throw error;
       onComplete();
     } catch (e) { setErr(String(e?.message || e)); }
-    finally { setBusy(false); }
+    finally { submitLock.current = false; setBusy(false); }
   }
 
   return (
@@ -2200,7 +2208,7 @@ function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut
       <div className="wiz-body">
         <div className="wiz-prompt">Start a new trip</div>
         <div className="wiz-help">
-          Welcome back. You've got {members.length} family member{members.length === 1 ? '' : 's'} set up. Just need a trip to start logging.
+          Welcome back. You've got {memberCount} family member{memberCount === 1 ? '' : 's'} set up. Just need a trip to start logging.
         </div>
 
         <div className="wiz-label">Trip name</div>
@@ -2245,13 +2253,13 @@ function NoTripScreen({ familyId, members, pastTrips = [], onComplete, onSignOut
 
         {err && <div className="login-err" style={{marginTop: 16}}>{err}</div>}
 
-        {pastTrips.length > 0 && (
+        {safePastTrips.length > 0 && (
           <>
-            <div className="wiz-label" style={{marginTop: 32}}>Past trips · {pastTrips.length}</div>
-            {pastTrips.slice(0, 6).map((t) => (
+            <div className="wiz-label" style={{marginTop: 32}}>Past trips · {safePastTrips.length}</div>
+            {safePastTrips.slice(0, 6).map((t) => (
               <div key={t.id} className="past-trip">
                 <div>
-                  <div className="nm">{t.name}</div>
+                  <div className="nm">{t.name || 'untitled trip'}</div>
                   <div className="dt">{t.start_date} → {t.end_date} · {t.primary_currency}</div>
                 </div>
                 <div style={{fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(14,14,14,0.4)'}}>ENDED</div>
@@ -4878,6 +4886,37 @@ function App() {
 
   // New trip wizard (reached from hub's "Start a new trip" button)
   if (view === 'new-trip') {
+    // Defensive: if family hasn't loaded yet, bounce back to hub instead of crashing.
+    if (!snapshotState.family) {
+      setView('hub');
+      return null;
+    }
+    // Demo users can't actually create a trip on Supabase. Send them back gently.
+    if (demoActive) {
+      return (
+        <div className="stage">
+          <div className="phone">
+            <div className="island" />
+            <div className="empty" style={{padding: 32, textAlign: 'center'}}>
+              <div className="empty-glyph">🔒</div>
+              <div className="empty-line">Sign in first.</div>
+              <div className="empty-sub">Sample mode is read-only. Tap below to sign in and start your real trip.</div>
+              <button className="empty-cta" onClick={() => setDemoDismissed(true)}>SIGN IN</button>
+              <button
+                onClick={() => setView('hub')}
+                style={{
+                  marginTop: 12, background: 'transparent', border: 'none',
+                  color: 'rgba(14,14,14,0.5)', fontSize: 11, fontWeight: 600,
+                  letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+                  padding: 12,
+                }}
+              >back to sample
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="stage">
         <div className="phone">
@@ -4953,7 +4992,74 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+/* Error boundary: catches any runtime React error and shows the actual
+   message + stack instead of unmounting to a blank screen. */
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null, info: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) {
+    console.error('[dadpaid] crash:', error);
+    console.error('[dadpaid] component stack:', info?.componentStack);
+    this.setState({ info });
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          minHeight: '100vh', background: '#fffaf0', color: '#0e0e0e',
+          padding: '32px 22px max(40px, env(safe-area-inset-bottom))',
+          fontFamily: 'IBM Plex Mono, Menlo, monospace', fontSize: 12, lineHeight: 1.6,
+        }}>
+          <div style={{
+            background: '#c0392b', color: '#fffaf0', padding: '12px 16px',
+            border: '2px solid #0e0e0e', boxShadow: '4px 4px 0 #0e0e0e',
+            marginBottom: 24,
+            fontFamily: 'Funnel Display, sans-serif', fontWeight: 800,
+            fontSize: 18, letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}>Something broke</div>
+
+          <div style={{fontWeight: 700, fontSize: 13, marginBottom: 8, color: '#0e0e0e'}}>
+            {String(this.state.error?.message || this.state.error)}
+          </div>
+
+          <details style={{margin: '12px 0', padding: '10px 12px', background: '#f1ecdf', border: '1.5px solid #0e0e0e', whiteSpace: 'pre-wrap', wordBreak: 'break-word'}}>
+            <summary style={{cursor: 'pointer', fontWeight: 700}}>stack trace</summary>
+            <div style={{marginTop: 8, fontSize: 11, color: 'rgba(14,14,14,0.7)'}}>
+              {String(this.state.error?.stack || '')}
+              {this.state.info?.componentStack || ''}
+            </div>
+          </details>
+
+          <div style={{display: 'flex', gap: 10, marginTop: 16}}>
+            <button
+              onClick={() => { this.setState({ error: null, info: null }); }}
+              style={{
+                flex: 1, padding: 14, background: '#e9c44b', color: '#0e0e0e',
+                border: '2px solid #0e0e0e', boxShadow: '4px 4px 0 #0e0e0e',
+                fontFamily: 'Funnel Display, sans-serif', fontWeight: 800, fontSize: 13,
+                letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer',
+              }}>RETRY</button>
+            <button
+              onClick={() => { window.location.reload(); }}
+              style={{
+                flex: 1, padding: 14, background: 'transparent', color: '#0e0e0e',
+                border: '2px solid #0e0e0e',
+                fontFamily: 'Funnel Display, sans-serif', fontWeight: 800, fontSize: 13,
+                letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer',
+              }}>RELOAD</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
 </script>
 </body>
 </html>
