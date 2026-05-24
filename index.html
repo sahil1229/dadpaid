@@ -1335,6 +1335,34 @@
     font-size: 11px; color: rgba(14,14,14,0.55);
     line-height: 1.5; margin-top: 8px; font-weight: 500;
   }
+  .login-jokes {
+    margin-top: 24px;
+    padding: 16px; border: 2px dashed rgba(14,14,14,0.2);
+    border-radius: 4px;
+    font-size: 12px; line-height: 1.55; color: rgba(14,14,14,0.7);
+  }
+  .login-jokes .qa { margin-bottom: 10px; }
+  .login-jokes .qa:last-child { margin-bottom: 0; }
+  .login-jokes .q {
+    font-family: 'Funnel Display'; font-weight: 700;
+    font-size: 12px; letter-spacing: 0.01em; color: #0e0e0e;
+    margin-bottom: 2px;
+  }
+  .login-foot {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(14,14,14,0.4);
+  }
+  .login-foot a {
+    color: rgba(14,14,14,0.55);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-bottom: 1.5px solid rgba(14,14,14,0.18);
+  }
+  .login-foot a:active { color: #0e0e0e; }
+  .login-foot .sep { margin: 0 8px; color: rgba(14,14,14,0.25); }
   .login-sent { text-align: center; padding: 8px 0; }
   .login-sent-line {
     font-family: 'Funnel Display'; font-weight: 800; font-size: 18px;
@@ -2438,6 +2466,9 @@ function LoginScreen() {
         <div className="login-brand">
           <div className="login-title">DAD PAID</div>
           <div className="login-tagline">Because on every trip, dad paid.</div>
+          <div className="login-tagline" style={{marginTop: 4, color: 'rgba(14,14,14,0.4)', fontSize: 10}}>
+            (and someone had to log it)
+          </div>
         </div>
         {sent ? (
           <div className="login-sent">
@@ -2475,6 +2506,31 @@ function LoginScreen() {
               Family account. All your phones sign in with the same email or Google account. No password.
             </div>
           </form>
+        )}
+
+        {!sent && (
+          <>
+            <div className="login-jokes">
+              <div className="qa">
+                <div className="q">Is this Splitwise?</div>
+                <div>No. Splitwise is for roommates arguing over rent. Dad Paid is for trips.</div>
+              </div>
+              <div className="qa">
+                <div className="q">Do I need to be a dad?</div>
+                <div>No. The name is mostly aspirational. The math doesn't check.</div>
+              </div>
+              <div className="qa">
+                <div className="q">Will my data be sold?</div>
+                <div>No. We're not big enough to be evil yet.</div>
+              </div>
+            </div>
+
+            <div className="login-foot">
+              <a href="about.html">About &amp; Privacy</a>
+              <span className="sep">·</span>
+              <span>v0.2</span>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -3628,6 +3684,15 @@ function SettingsScreen({ expenses, online, pendingCount, userEmail, participant
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span>SIGN OUT</span>
         </div>
+
+        <a
+          href="about.html"
+          className="settings-action"
+          style={{textDecoration: 'none', color: 'inherit'}}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>ABOUT &amp; PRIVACY</span>
+        </a>
 
         <div style={{padding: '24px 22px', textAlign:'center', fontSize:11, fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(14,14,14,0.45)'}}>
           dadpaid · v0.2 · synced via supabase

@@ -1,9 +1,10 @@
 // dadpaid service worker — offline shell cache
-const CACHE = 'dadpaid-v2';
+const CACHE = 'dadpaid-v3';
 
 const SHELL = [
   './',
   './index.html',
+  './about.html',
   './lib/helpers.js',
   './manifest.json',
   './apple-touch-icon.png',
