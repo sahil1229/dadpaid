@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <title>About · Dad Paid</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Funnel+Display:wght@600;700;800;900&family=Funnel+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #0e0e0e;
+      color: #0e0e0e;
+      font-family: 'Funnel Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 0 80px;
+      min-height: 100vh;
+      background: #fffaf0;
+    }
+    .top {
+      background: #0e0e0e; color: #fffaf0;
+      padding: calc(env(safe-area-inset-top) + 22px) 24px 22px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .top .brand {
+      font-family: 'Funnel Display'; font-weight: 900; font-size: 26px;
+      color: #e9c44b; letter-spacing: -0.01em;
+    }
+    .top .back {
+      color: #e9c44b; text-decoration: none;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border: 2px solid #e9c44b; padding: 8px 14px; border-radius: 4px;
+    }
+    .top .back:active { background: #e9c44b; color: #0e0e0e; }
+    section {
+      padding: 28px 24px 8px;
+      border-bottom: 1.5px solid rgba(14,14,14,0.1);
+    }
+    section:last-of-type { border-bottom: none; }
+    h2 {
+      font-family: 'Funnel Display'; font-weight: 800;
+      font-size: 20px; letter-spacing: -0.005em;
+      margin: 0 0 12px;
+    }
+    h2 .num {
+      display: inline-block; vertical-align: 1px;
+      background: #e9c44b; color: #0e0e0e;
+      border: 2px solid #0e0e0e; padding: 1px 8px; border-radius: 4px;
+      font-family: 'IBM Plex Mono'; font-weight: 700;
+      font-size: 12px; letter-spacing: 0.04em;
+      margin-right: 10px;
+    }
+    p { font-size: 14px; line-height: 1.6; margin: 8px 0; color: rgba(14,14,14,0.85); }
+    ul { padding-left: 20px; margin: 8px 0; }
+    li { font-size: 14px; line-height: 1.65; color: rgba(14,14,14,0.85); margin-bottom: 4px; }
+    strong { color: #0e0e0e; }
+    em { color: rgba(14,14,14,0.6); font-style: normal; font-weight: 600; }
+    a { color: #0e0e0e; text-decoration: underline; text-underline-offset: 3px; }
+    .qa { margin-bottom: 14px; }
+    .qa .q {
+      font-family: 'Funnel Display'; font-weight: 700;
+      font-size: 14px; margin-bottom: 4px;
+    }
+    .qa .a {
+      font-size: 14px; line-height: 1.55; color: rgba(14,14,14,0.7);
+    }
+    .data-row {
+      display: grid; grid-template-columns: 130px 1fr; gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1.5px dashed rgba(14,14,14,0.12);
+      font-size: 13px;
+    }
+    .data-row:last-child { border-bottom: none; }
+    .data-row .k {
+      font-family: 'IBM Plex Mono'; font-weight: 600;
+      letter-spacing: 0.04em; color: rgba(14,14,14,0.55);
+    }
+    .stamp {
+      display: inline-block;
+      background: #e9c44b; color: #0e0e0e;
+      border: 2px solid #0e0e0e; padding: 4px 10px;
+      font-family: 'Funnel Display'; font-weight: 800; font-size: 11px;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      box-shadow: 3px 3px 0 #0e0e0e;
+      margin-bottom: 8px;
+    }
+    .meta {
+      font-size: 11px; color: rgba(14,14,14,0.45);
+      letter-spacing: 0.06em; margin-top: 8px;
+    }
+    .foot {
+      padding: 24px 24px max(28px, env(safe-area-inset-bottom));
+      text-align: center;
+      background: #f1ecdf;
+      border-top: 2px solid #0e0e0e;
+    }
+    .foot .line {
+      font-family: 'Funnel Display'; font-weight: 800;
+      font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .foot .sub {
+      font-size: 11px; color: rgba(14,14,14,0.55);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Top bar -->
+    <div class="top">
+      <div class="brand">DAD PAID</div>
+      <a class="back" href="./">← Back to app</a>
+    </div>
+
+    <!-- About -->
+    <section>
+      <div class="stamp">ABOUT</div>
+      <h2><span class="num">01</span>What is this</h2>
+      <p>
+        A stupidly simple family travel expense tracker. Built for the people who go on trips together and then spend the flight home arguing about who paid for what.
+      </p>
+      <p>
+        It is not Splitwise, it is not corporate finance, it is not a budgeting app. It is a giant number pad, a couple of avatars, and an algorithm at the end that tells you who owes whom. Mild guilt, lightly tracked.
+      </p>
+
+      <div class="qa" style="margin-top: 20px">
+        <div class="q">Do I need to be a dad?</div>
+        <div class="a">No. The name is mostly aspirational. Use it with friends, partners, siblings, anyone. The settlement math doesn't check.</div>
+      </div>
+
+      <div class="qa">
+        <div class="q">Is this just Splitwise?</div>
+        <div class="a">No. Splitwise is for roommates arguing over rent. Dad Paid is for trips. One keypad, one ledger, one wrap screen at the end. Quieter UX.</div>
+      </div>
+
+      <div class="qa">
+        <div class="q">Will my data be sold to advertisers?</div>
+        <div class="a">No. We're not big enough to be evil yet. Also there is no us, this is a side project. See the privacy section below for the boring details.</div>
+      </div>
+    </section>
+
+    <!-- Privacy -->
+    <section>
+      <div class="stamp">PRIVACY</div>
+      <h2><span class="num">02</span>What we collect, where it lives</h2>
+      <p>
+        Plain English. No legalese.
+      </p>
+
+      <div class="data-row">
+        <div class="k">Email</div>
+        <div>Used as your sign-in identifier. Stored by our auth provider. Never shown to anyone outside your trips.</div>
+      </div>
+      <div class="data-row">
+        <div class="k">Your name &amp; color</div>
+        <div>What you typed in onboarding. Shown only to people on your trips.</div>
+      </div>
+      <div class="data-row">
+        <div class="k">Expenses</div>
+        <div>Title, amount, currency, date, payer, category, split rule, and optional photo. Visible to everyone you've invited to that trip and nobody else.</div>
+      </div>
+      <div class="data-row">
+        <div class="k">Photos</div>
+        <div>Stored in a private Supabase Storage bucket. Each photo is scoped to your family. Only signed URLs are issued, valid for one hour.</div>
+      </div>
+      <div class="data-row">
+        <div class="k">Cards</div>
+        <div>Last 4 digits and nicknames only. We never see or store full card numbers, CVV, expiry, or any payment credential. Cards in this app are <strong>labels</strong>, not payment methods.</div>
+      </div>
+      <div class="data-row">
+        <div class="k">Cookies</div>
+        <div>One session cookie from our auth provider. No tracking cookies. No advertising cookies. No fingerprinting.</div>
+      </div>
+      <div class="data-row">
+        <div class="k">Analytics</div>
+        <div>None right now. If we add any, it will be opt-in and explicitly named here.</div>
+      </div>
+
+      <h2 style="margin-top: 28px"><span class="num">03</span>Where it's stored</h2>
+      <p>
+        <strong>Supabase</strong> (Postgres database + auth + storage) runs on AWS. Your data is encrypted at rest and in transit. <strong>Vercel</strong> serves this site. Both are SOC 2 compliant.
+      </p>
+      <p>
+        We do not sell, license, or share your data with anyone except the services strictly required to make the app work. There are no third-party marketing or advertising integrations.
+      </p>
+
+      <h2 style="margin-top: 28px"><span class="num">04</span>Your rights</h2>
+      <ul>
+        <li><strong>Export</strong>: Settings → DATA → EXPORT AS CSV. All your expenses, anytime.</li>
+        <li><strong>Edit</strong>: Tap any row in the ledger to edit or delete. Tap any member or card in Settings.</li>
+        <li><strong>Delete your account</strong>: email <em>hello@dadpaid.app</em> (placeholder address — will be wired up when we have one) and we'll wipe everything within 7 days. Your family + trips + expenses + photos cascade out cleanly.</li>
+        <li><strong>Right to know</strong>: ask us what we have on you. The answer is "the email you signed up with, the rows you typed in, and the photos you uploaded." That's it.</li>
+      </ul>
+
+      <h2 style="margin-top: 28px"><span class="num">05</span>If you invite someone</h2>
+      <p>
+        When you generate an invite link and send it to a friend, that friend sees the trip you invited them to. They see every expense on that trip and every other guest. They don't see anything else you've ever created in Dad Paid. They join with their own email; you can revoke their access by signing out, deleting the trip, or removing them from settings.
+      </p>
+    </section>
+
+    <!-- Terms (lightweight) -->
+    <section>
+      <div class="stamp">TERMS</div>
+      <h2><span class="num">06</span>The understanding</h2>
+      <p>
+        Use it for what it's for. Don't try to break it. We make no guarantees that the settlement math will hold up in court when your cousin refuses to pay for the Airbnb.
+      </p>
+      <p>
+        This is a side project. It's free. It may go down sometimes. If something matters financially, double-check it with whatever method you'd usually use. Don't sue us; we're a hobby.
+      </p>
+      <p>
+        If you find a bug, a leak, or anything weird, please tell us at <em>hello@dadpaid.app</em> and we will love you a normal amount.
+      </p>
+    </section>
+
+    <!-- Footer -->
+    <div class="foot">
+      <div class="line">on every trip, dad paid</div>
+      <div class="sub">Made by a guy on a laptop. Open source — see the GitHub link on the main app.</div>
+      <div class="meta">Last updated: 2026-05-24 · v0.2</div>
+    </div>
+
+  </div>
+</body>
+</html>
