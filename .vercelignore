@@ -1,0 +1,13 @@
+# Hide the v0.3 Vite migration from Vercel until the flip is complete.
+# Vercel deploys only the legacy static files at the repo root.
+src/
+public/
+node_modules/
+dist/
+dist-types/
+package.json
+package-lock.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+*.tsbuildinfo

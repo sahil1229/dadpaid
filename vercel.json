@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "echo 'static deploy: skipping build until v0.3 migration complete'",
-  "outputDirectory": ".",
-  "framework": null,
   "headers": [
     {
       "source": "/sw.js",
